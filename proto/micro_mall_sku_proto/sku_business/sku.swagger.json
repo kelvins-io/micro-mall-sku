@@ -1,0 +1,203 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/micro_mall_sku_proto/sku_business/sku.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/sku/list": {
+      "get": {
+        "operationId": "GetSkuList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessGetSkuListResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shop_id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
+    "/v1/sku/put_away": {
+      "post": {
+        "summary": "上架商品",
+        "operationId": "PutAwaySku",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessPutAwaySkuResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessPutAwaySkuRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "sku_businessCommonResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/sku_businessRetCode"
+        },
+        "msg": {
+          "type": "string"
+        }
+      }
+    },
+    "sku_businessGetSkuListResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessSkuInventoryInfo"
+          }
+        }
+      }
+    },
+    "sku_businessOperationType": {
+      "type": "string",
+      "enum": [
+        "CREATE",
+        "UPDATE",
+        "DELETE",
+        "AUDIT",
+        "PUT_AWAY"
+      ],
+      "default": "CREATE"
+    },
+    "sku_businessPutAwaySkuRequest": {
+      "type": "object",
+      "properties": {
+        "op_uid": {
+          "type": "string",
+          "format": "int64"
+        },
+        "op_ip": {
+          "type": "string"
+        },
+        "sku": {
+          "$ref": "#/definitions/sku_businessSkuInventoryInfo"
+        },
+        "operation_type": {
+          "$ref": "#/definitions/sku_businessOperationType"
+        }
+      }
+    },
+    "sku_businessPutAwaySkuResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        }
+      }
+    },
+    "sku_businessRetCode": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "ERROR",
+        "USER_NOT_EXIST",
+        "USER_EXIST",
+        "MERCHANT_NOT_EXIST",
+        "MERCHANT_EXIST",
+        "SHOP_NOT_EXIST",
+        "SHOP_EXIST",
+        "SKU_NOT_EXIST",
+        "SKU_EXIST"
+      ],
+      "default": "SUCCESS"
+    },
+    "sku_businessSkuInventoryInfo": {
+      "type": "object",
+      "properties": {
+        "sku_code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "sub_title": {
+          "type": "string"
+        },
+        "desc": {
+          "type": "string"
+        },
+        "production": {
+          "type": "string"
+        },
+        "supplier": {
+          "type": "string"
+        },
+        "category": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "color": {
+          "type": "string"
+        },
+        "color_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "specification": {
+          "type": "string"
+        },
+        "desc_link": {
+          "type": "string"
+        },
+        "state": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "amount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "商品库存数据"
+    }
+  }
+}
