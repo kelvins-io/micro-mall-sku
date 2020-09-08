@@ -1,13 +1,13 @@
 package main
 
 import (
-	"gitee.com/cristiane/micro-mall-users/vars"
+	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/kelvins"
-	"gitee.com/cristiane/micro-mall-users/startup"
+	"gitee.com/cristiane/micro-mall-sku/startup"
 	"gitee.com/kelvins-io/kelvins/app"
 )
 
-const APP_NAME = "micro-mall-users"
+const APP_NAME = "micro-mall-sku"
 
 func main() {
 	application := &kelvins.GRPCApplication{

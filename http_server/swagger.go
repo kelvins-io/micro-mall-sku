@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"gitee.com/cristiane/micro-mall-users/proto"
+	"gitee.com/cristiane/micro-mall-sku/proto"
 	"gitee.com/kelvins-io/common/env"
 )
 

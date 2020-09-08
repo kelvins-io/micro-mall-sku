@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"gitee.com/cristiane/micro-mall-users/pkg/util"
-	"gitee.com/cristiane/micro-mall-users/proto/micro_mall_users_proto/users"
+	"gitee.com/cristiane/micro-mall-sku/pkg/util"
+	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_users_proto/users"
 	"testing"
 )
 

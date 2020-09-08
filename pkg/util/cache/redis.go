@@ -3,7 +3,7 @@ package cache
 import (
 	"crypto/md5"
 	"fmt"
-	"gitee.com/cristiane/micro-mall-users/vars"
+	"gitee.com/cristiane/micro-mall-sku/vars"
 	"github.com/gomodule/redigo/redis"
 )
 

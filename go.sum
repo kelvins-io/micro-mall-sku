@@ -47,6 +47,8 @@ gitee.com/cristiane/go-common v0.0.0-20200103100912-9b4de946a640/go.mod h1:EX6uv
 gitee.com/cristiane/go-common v1.0.1/go.mod h1:EX6uv/8C8ThHXrkpStwKupS4Ex8QX53EwuAf3/BzPoY=
 gitee.com/cristiane/micro-mall-sku v0.0.0-20200614093048-a2b9b236940a h1:MwiUlcsOm2wKBj2LAxXUP3Tb1CM09fG5Ak6IklcD/vQ=
 gitee.com/cristiane/micro-mall-users v0.0.0-20200614131643-90408a69a6e1 h1:hyBh2thhZWnDvzdeAzSHzwG11+wn4e7ZbR97qH/Q+4s=
+gitee.com/cristiane/micro-mall-users v0.0.0-20200905175913-5c852df4d247 h1:ZSI0vRf8fUOawHsFni1+g7wwgqrv7fqGvnT6lusahiI=
+gitee.com/cristiane/micro-mall-users v0.0.0-20200905175913-5c852df4d247/go.mod h1:KV/mKJVx5PxLatO+jROTFQnF3vsPCHvcsbXGIX0bX04=
 gitee.com/cristiane/track-service-config v0.0.0-20200103101155-0a1b993478df/go.mod h1:wDzDNbrFIWd+YhfWO+MoZyxjYRmfQ/JXUHTZ0ac6FqU=
 gitee.com/kelvins-io/common v1.0.1 h1:/km2YCjd9ZtoF+/3KsJl5OSPw7z6fKPVnzH2zGE6KFw=
 gitee.com/kelvins-io/common v1.0.1/go.mod h1:oyiyeVd/DMxKLv2pZDlvTWUihXpcoiQ07ejxYEBPybA=

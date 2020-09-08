@@ -2,7 +2,7 @@ package email
 
 import (
 	"context"
-	"gitee.com/cristiane/micro-mall-users/vars"
+	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/kelvins"
 	"strings"
 	"sync"
