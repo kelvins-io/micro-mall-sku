@@ -146,3 +146,52 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 
 	return
 }
+
+func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuPropertyRequest) int {
+	if req.ShopId > 0 {
+		serverName := args.RpcServiceMicroMallShop
+		conn, err := util.GetGrpcClient(serverName)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
+			return code.ErrorServer
+		}
+		defer conn.Close()
+		client := shop_business.NewShopBusinessServiceClient(conn)
+		r := shop_business.GetShopMaterialRequest{
+			ShopId: req.ShopId,
+		}
+		rsp, err := client.GetShopMaterial(ctx, &r)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "GetShopMaterial %v,err: %v, req: %+v", serverName, err, r)
+			return code.ErrorServer
+		}
+		if rsp == nil || rsp.Material == nil || rsp.Material.ShopId <= 0 {
+			return code.ShopBusinessNotExist
+		}
+	}
+
+	if req.OperationType == sku_business.OperationType_CREATE {
+		skuExInfo := args.SkuPropertyEx{
+			OpUid:             req.OpUid,
+			OpIp:              req.OpIp,
+			ShopId:            req.ShopId,
+			SkuCode:           req.SkuCode,
+			Name:              req.Name,
+			Size:              req.Size,
+			Shape:             req.Shape,
+			ProductionCountry: req.ProductionCountry,
+			ProductionDate:    req.ProductionDate,
+			ShelfLife:         req.ShelfLife,
+		}
+		err := repository.CreateSkuPropertyEx(ctx, &skuExInfo)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuExInfo)
+			return code.ErrorServer
+		}
+		return code.Success
+	} else if req.OperationType == sku_business.OperationType_UPDATE {
+
+	}
+
+	return code.Success
+}

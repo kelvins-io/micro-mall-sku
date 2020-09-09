@@ -11,6 +11,7 @@ const (
 	SectionEmailConfig             = "email-config"
 	SectionQueueUserRegisterNotice = "queue-user-register-notice"
 	SectionQueueUserStateNotice    = "queue-user-state-notice"
+	SectionMongoDB                 = "mongodb-config"
 )
 
 // LoadConfig 加载配置对象映射
@@ -27,5 +28,9 @@ func LoadConfig() error {
 	log.Printf("[info] Load default config %s", SectionQueueUserStateNotice)
 	vars.QueueAMQPSettingUserStateNotice = new(setting.QueueAMQPSettingS)
 	config.MapConfig(SectionQueueUserStateNotice, vars.QueueAMQPSettingUserStateNotice)
+	// 加载mongodb 配置
+	log.Printf("[info] Load default config %s", SectionMongoDB)
+	vars.MongoDBSetting = new(vars.MongoDBSettingS)
+	config.MapConfig(SectionMongoDB, vars.MongoDBSetting)
 	return nil
 }

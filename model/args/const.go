@@ -21,6 +21,19 @@ type SkuInventoryInfo struct {
 	ShopId int64 `json:"shop_id"`
 }
 
+type SkuPropertyEx struct {
+	OpUid             int64  `bson:"op_uid"`
+	OpIp              string `bson:"op_ip"`
+	ShopId            int64  `bson:"shop_id"`
+	SkuCode           string `bson:"sku_code"`
+	Name              string `bson:"name"`
+	Size              string `bson:"size"`
+	Shape             string `bson:"shape"`
+	ProductionCountry string `bson:"production_country"`
+	ProductionDate    string `bson:"production_date"`
+	ShelfLife         string `bson:"shelf_life"`
+}
+
 const (
 	RpcServiceMicroMallUsers = "micro-mall-users"
 	RpcServiceMicroMallShop  = "micro-mall-shop"
