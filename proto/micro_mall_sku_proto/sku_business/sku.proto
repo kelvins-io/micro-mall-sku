@@ -49,7 +49,7 @@ message SupplementSkuPropertyResponse {
 }
 
 message GetSkuListRequest {
-    int64 shop_id = 1; // 指定店铺搜索，为0则搜索全部
+    int64 shop_id = 2; // 指定店铺搜索，为0则搜索全部
 }
 
 message GetSkuListResponse {

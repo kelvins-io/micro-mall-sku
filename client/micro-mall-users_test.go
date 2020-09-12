@@ -19,7 +19,7 @@ func TestRegister(t *testing.T) {
 	client := users.NewUsersServiceClient(conn)
 	ctx := context.Background()
 	r := users.GetUserInfoRequest{
-		Uid:                  10009,
+		Uid: 10009,
 	}
 	accountInfo, err := client.GetUserInfo(ctx, &r)
 	if err != nil {

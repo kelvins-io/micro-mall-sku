@@ -5,9 +5,23 @@ import (
 )
 
 const (
-	TableSkuInventory = "sku_inventory"
-	TableSkuProperty  = "sku_property"
+	TableSkuInventory    = "sku_inventory"
+	TableSkuProperty     = "sku_property"
+	TableSkuPriceHistory = "sku_price_history"
 )
+
+type SkuPriceHistory struct {
+	Id         int64     `xorm:"'id' pk autoincr comment('自增ID') BIGINT"`
+	ShopId     int64     `xorm:"'shop_id' not null comment('调价的店铺id') unique(shop_id_sku_code_index) BIGINT"`
+	SkuCode    string    `xorm:"'sku_code' not null comment('商品sku_code') unique(shop_id_sku_code_index) index CHAR(40)"`
+	Price      string    `xorm:"'price' not null comment('商品价格') DECIMAL(32,16)"`
+	Tsp        int       `xorm:"'tsp' not null comment('价格变化时的时间戳') index INT"`
+	Reason     string    `xorm:"'reason' comment('调价说明') TEXT"`
+	CreateTime time.Time `xorm:"'create_time' not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
+	UpdateTime time.Time `xorm:"'update_time' not null default CURRENT_TIMESTAMP comment('更新时间') DATETIME"`
+	OpUid      int64     `xorm:"'op_uid' comment('操作员UID') BIGINT"`
+	OpIp       string    `xorm:"'op_ip' comment('操作员IP') CHAR(16)"`
+}
 
 type SkuInventory struct {
 	Id         int64     `xorm:"'id' pk autoincr comment('商品库存ID') BIGINT"`

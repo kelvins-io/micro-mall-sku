@@ -1,9 +1,9 @@
 package main
 
 import (
+	"gitee.com/cristiane/micro-mall-sku/startup"
 	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/kelvins"
-	"gitee.com/cristiane/micro-mall-sku/startup"
 	"gitee.com/kelvins-io/kelvins/app"
 )
 

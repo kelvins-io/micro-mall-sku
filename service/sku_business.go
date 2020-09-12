@@ -71,6 +71,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			UpdateTime:    time.Now(),
 		}
 		tx := kelvins.XORM_DBEngine.NewSession()
+		// 存储商品属性-基本属性
 		err = repository.CreateSkuProperty(tx, &skuProperty)
 		if err != nil {
 			tx.Rollback()
@@ -78,6 +79,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+		// 增加库存记录
 		skuInventory := mysql.SkuInventory{
 			SkuCode:    req.Sku.SkuCode,
 			Amount:     req.Sku.Amount,
@@ -90,6 +92,25 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		if err != nil {
 			tx.Rollback()
 			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventory err: %v, skuInventory: %+v", err, skuInventory)
+			retCode = code.ErrorServer
+			return
+		}
+		// 插入价格历史
+		skuPriceHistory := &mysql.SkuPriceHistory{
+			ShopId:     req.Sku.ShopId,
+			SkuCode:    req.Sku.SkuCode,
+			Price:      req.Sku.Price,
+			Tsp:        int(time.Now().Unix()),
+			Reason:     req.Sku.Name,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
+			OpUid:      req.OpUid,
+			OpIp:       req.OpIp,
+		}
+		err = repository.CreateSkuPriceHistory(tx, skuPriceHistory)
+		if err != nil {
+			tx.Rollback()
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPriceHistory err: %v, skuPriceHistory: %+v", err, skuPriceHistory)
 			retCode = code.ErrorServer
 			return
 		}

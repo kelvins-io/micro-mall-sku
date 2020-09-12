@@ -8,8 +8,8 @@ type EmailConfigSettingS struct {
 }
 
 type MongoDBSettingS struct {
-	Uri         string `json:"host"`
-	Username    string `json:"user"`
+	Uri         string `json:"uri"`
+	Username    string `json:"username"`
 	Password    string `json:"password"`
 	Database    string `json:"database"`
 	AuthSource  string `json:"auth_source"`
