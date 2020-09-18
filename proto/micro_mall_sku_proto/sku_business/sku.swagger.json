@@ -11,7 +11,34 @@
     "application/json"
   ],
   "paths": {
-    "/v1/sku/list": {
+    "/v1/sku/inventory/deduct": {
+      "put": {
+        "summary": "扣减库存",
+        "operationId": "DeductInventory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessDeductInventoryResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessDeductInventoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
+    "/v1/sku/inventory/list": {
       "get": {
         "summary": "获取店铺sku列表",
         "operationId": "GetSkuList",
@@ -30,6 +57,33 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
+    "/v1/sku/inventory/put_away": {
+      "post": {
+        "summary": "上架商品",
+        "operationId": "PutAwaySku",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessPutAwaySkuResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessPutAwaySkuRequest"
+            }
           }
         ],
         "tags": [
@@ -63,33 +117,6 @@
           "SkuBusinessService"
         ]
       }
-    },
-    "/v1/sku/put_away": {
-      "post": {
-        "summary": "上架商品",
-        "operationId": "PutAwaySku",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/sku_businessPutAwaySkuResponse"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/sku_businessPutAwaySkuRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SkuBusinessService"
-        ]
-      }
     }
   },
   "definitions": {
@@ -101,6 +128,56 @@
         },
         "msg": {
           "type": "string"
+        }
+      }
+    },
+    "sku_businessDeductEntryDetail": {
+      "type": "object",
+      "properties": {
+        "sku_code": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "sku_businessDeductEntryShop": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "detail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessDeductEntryDetail"
+          }
+        }
+      }
+    },
+    "sku_businessDeductInventoryRequest": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessDeductEntryShop"
+          }
+        }
+      }
+    },
+    "sku_businessDeductInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
+        "is_success": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -164,7 +241,8 @@
         "SHOP_NOT_EXIST",
         "SHOP_EXIST",
         "SKU_NOT_EXIST",
-        "SKU_EXIST"
+        "SKU_EXIST",
+        "SKU_AMOUNT_NOT_ENOUGH"
       ],
       "default": "SUCCESS"
     },

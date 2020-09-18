@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"gitee.com/cristiane/micro-mall-sku/model/args"
 	"gitee.com/cristiane/micro-mall-sku/model/mysql"
 	"gitee.com/cristiane/micro-mall-sku/pkg/code"
@@ -215,4 +216,128 @@ func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuP
 	}
 
 	return code.Success
+}
+
+func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryRequest) (result *args.DeductInventoryRsp, retCode int) {
+	result = &args.DeductInventoryRsp{List: make([]args.InventoryState, 0)}
+	retCode = code.Success
+
+	// 汇总商品
+	allShopIdList := make([]int64, len(req.List))
+	allSkuCodeList := make([]string, 0)
+	allShopIdSkuCodeAmount := make(map[string]int64)
+	for i := 0; i < len(req.List); i++ {
+		allShopIdList[i] = req.List[i].ShopId
+		if len(req.List[i].Detail) == 0 {
+			continue
+		}
+		skuCodeList := make([]string, len(req.List[i].Detail))
+		for j := 0; j < len(req.List[i].Detail); j++ {
+			skuCodeList[j] = req.List[i].Detail[j].SkuCode
+		}
+		allSkuCodeList = append(allSkuCodeList, skuCodeList...)
+	}
+
+	// 从DB里面取出这些商品
+	inventoryList, err := repository.GetSkuInventoryList(allShopIdList, allSkuCodeList)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, allShopIdList, allSkuCodeList)
+		retCode = code.ErrorServer
+		return
+	}
+
+	// 收集数据库中商品剩余数量
+	for i := 0; i < len(inventoryList); i++ {
+		key := fmt.Sprintf("%d-%s", inventoryList[i].ShopId, inventoryList[i].SkuCode)
+		fmt.Println("key ==", key)
+		allShopIdSkuCodeAmount[key] = inventoryList[i].Amount // 如果shop_id + sku_code 是union key可以直接赋值
+	}
+
+	// 统计哪些商品不够数量
+	inventoryState := make(map[int64][]string)
+	for i := 0; i < len(req.List); i++ {
+		allShopIdList[i] = req.List[i].ShopId
+		if len(req.List[i].Detail) == 0 {
+			continue
+		}
+		// 依赖于请求数据正常排序，同一个店铺的商品聚合在一起
+		for j := 0; j < len(req.List[i].Detail); j++ {
+			// 判断请求中的商品是否达到购买条件
+			amountKey := fmt.Sprintf("%d-%s", req.List[i].ShopId, req.List[i].Detail[j].SkuCode)
+			v, ok := allShopIdSkuCodeAmount[amountKey]
+			if !ok {
+				inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
+			} else {
+				// 如果数据库中sku数量小于要购买的数量
+				if v < req.List[i].Detail[j].Amount {
+					inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
+				}
+			}
+		}
+	}
+	// 检查是否有不满足购买条件的商品
+	if len(inventoryState) > 0 {
+		result.List = make([]args.InventoryState, 0)
+		for k, v := range inventoryState {
+			state := args.InventoryState{
+				ShopId:   k,
+				SkuCodes: v,
+			}
+			result.List = append(result.List, state)
+		}
+		return result, code.SkuAmountNotEnough
+	}
+
+	// 开始扣减库存
+	result.List = make([]args.InventoryState, 0)
+	tx := kelvins.XORM_DBEngine.NewSession()
+	for i := 0; i < len(req.List); i++ {
+		allShopIdList[i] = req.List[i].ShopId
+		if len(req.List[i].Detail) == 0 {
+			continue
+		}
+		inventoryState = make(map[int64][]string)
+		for j := 0; j < len(req.List[i].Detail); j++ {
+			amountKey := fmt.Sprintf("%d-%s", req.List[i].ShopId, req.List[i].Detail[j].SkuCode)
+			v, ok := allShopIdSkuCodeAmount[amountKey]
+			if ok {
+				// 使用乐观锁扣减库存
+				where := map[string]interface{}{
+					"shop_id":  req.List[i].ShopId,
+					"sku_code": req.List[i].Detail[j].SkuCode,
+					"amount":   v,
+				}
+				maps := map[string]interface{}{
+					"amount":      v - req.List[i].Detail[j].Amount,
+					"update_time": time.Now(),
+				}
+				rows, err := repository.DeductInventory(tx, where, maps)
+				if err != nil {
+					tx.Rollback()
+					kelvins.ErrLogger.Errorf(ctx, "DeductInventory err: %v, where: %v, maps: %v", err, where, maps)
+					retCode = code.ErrorServer
+					return
+				}
+				if rows <= 0 {
+					tx.Rollback()
+					retCode = code.SkuAmountNotEnough
+					inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
+				}
+			}
+		}
+		if len(inventoryState) > 0 {
+			for k, v := range inventoryState {
+				state := args.InventoryState{
+					ShopId:   k,
+					SkuCodes: v,
+				}
+				result.List = append(result.List, state)
+			}
+			return result, code.SkuAmountNotEnough
+		}
+	}
+	tx.Commit()
+
+	retCode = code.Success
+	return
 }

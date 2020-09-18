@@ -16,7 +16,9 @@ func CheckSkuInventoryExist(skuCode string) (exist bool, err error) {
 	var model mysql.SkuInventory
 	_, err = kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory).
 		Select("id").
-		Where("sku_code = ?", skuCode).Get(&model)
+		Where("sku_code = ?", skuCode).
+		Where("amount >= 0").
+		Get(&model)
 	if err != nil {
 		return false, err
 	}
@@ -29,9 +31,24 @@ func CheckSkuInventoryExist(skuCode string) (exist bool, err error) {
 func GetSkuInventoryListByShopId(shopId int64) ([]mysql.SkuInventory, error) {
 	var result = make([]mysql.SkuInventory, 0)
 	session := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory)
+	session = session.Where("amount >= 0")
 	if shopId > 0 {
 		session = session.Where("shop_id = ?", shopId)
 	}
 	err := session.Desc("create_time").Find(&result)
 	return result, err
+}
+
+func GetSkuInventoryList(shopIdList []int64, skuCodeList []string) ([]*mysql.SkuInventory, error) {
+	var result = make([]*mysql.SkuInventory, 0)
+	err := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory).
+		Where("amount > 0").
+		In("shop_id", shopIdList).
+		In("sku_code", skuCodeList).
+		Find(&result)
+	return result, err
+}
+
+func DeductInventory(tx *xorm.Session, where, maps map[string]interface{}) (int64, error) {
+	return tx.Table(mysql.TableSkuInventory).Where(where).Update(maps)
 }
