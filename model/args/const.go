@@ -34,6 +34,15 @@ type SkuPropertyEx struct {
 	ShelfLife         string `bson:"shelf_life"`
 }
 
+type InventoryState struct {
+	ShopId   int64    `json:"shop_id"`
+	SkuCodes []string `json:"sku_codes"`
+}
+
+type DeductInventoryRsp struct {
+	List []InventoryState `json:"list"`
+}
+
 const (
 	RpcServiceMicroMallUsers = "micro-mall-users"
 	RpcServiceMicroMallShop  = "micro-mall-shop"

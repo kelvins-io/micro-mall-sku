@@ -8,14 +8,14 @@ service SkuBusinessService {
     // 上架商品
     rpc PutAwaySku(PutAwaySkuRequest) returns (PutAwaySkuResponse) {
         option (google.api.http) = {
-            post: "/v1/sku/put_away"
+            post: "/v1/sku/inventory/put_away"
             body:"*"
         };
     }
     // 获取店铺sku列表
     rpc GetSkuList(GetSkuListRequest) returns (GetSkuListResponse) {
         option (google.api.http) = {
-            get: "/v1/sku/list"
+            get: "/v1/sku/inventory/list"
         };
     }
     // 补充sku商品属性
@@ -25,6 +25,32 @@ service SkuBusinessService {
             body:"*"
         };
     }
+    // 扣减库存
+    rpc DeductInventory(DeductInventoryRequest) returns (DeductInventoryResponse) {
+        option (google.api.http) = {
+            put: "/v1/sku/inventory/deduct"
+            body:"*"
+        };
+    }
+}
+
+message DeductEntryShop {
+    int64 shop_id = 1;
+    repeated DeductEntryDetail detail = 2;
+}
+
+message DeductEntryDetail {
+    string sku_code = 1;
+    int64 amount = 2;
+}
+
+message DeductInventoryRequest {
+    repeated DeductEntryShop list = 1;
+}
+
+message DeductInventoryResponse {
+    CommonResponse common = 1;
+    bool is_success = 2; // 是否成功，要么全部成功，要么全部失败
 }
 
 message SupplementSkuPropertyRequest {
@@ -99,6 +125,7 @@ enum RetCode {
     SHOP_EXIST = 50006;
     SKU_NOT_EXIST = 50007;
     SKU_EXIST = 50008;
+    SKU_AMOUNT_NOT_ENOUGH = 50009;
 }
 
 enum OperationType {

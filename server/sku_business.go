@@ -112,3 +112,25 @@ func (s *SkuBusinessServer) SupplementSkuProperty(ctx context.Context, req *sku_
 	result.Common.Msg = errcode.GetErrMsg(code.Success)
 	return &result, nil
 }
+
+func (s *SkuBusinessServer) DeductInventory(ctx context.Context, req *sku_business.DeductInventoryRequest) (*sku_business.DeductInventoryResponse, error) {
+	var result sku_business.DeductInventoryResponse
+	result.Common = &sku_business.CommonResponse{
+		Code: sku_business.RetCode_SUCCESS,
+		Msg:  errcode.GetErrMsg(code.Success),
+	}
+
+	_, retCode := service.DeductInventory(ctx, req)
+	if retCode != code.Success {
+		if retCode == code.SkuAmountNotEnough {
+			result.Common.Code = sku_business.RetCode_SKU_AMOUNT_NOT_ENOUGH
+			result.Common.Msg = errcode.GetErrMsg(code.SkuAmountNotEnough)
+			return &result, nil
+		}
+		result.Common.Code = sku_business.RetCode_ERROR
+		result.Common.Msg = errcode.GetErrMsg(code.ErrorServer)
+		return &result, nil
+	}
+	result.IsSuccess = true
+	return &result, nil
+}
