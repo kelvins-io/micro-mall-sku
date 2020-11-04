@@ -72,10 +72,19 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			UpdateTime:    time.Now(),
 		}
 		tx := kelvins.XORM_DBEngine.NewSession()
+		err = tx.Begin()
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Begin err: %v", err)
+			retCode = code.ErrorServer
+			return
+		}
 		// 存储商品属性-基本属性
 		err = repository.CreateSkuProperty(tx, &skuProperty)
 		if err != nil {
-			tx.Rollback()
+			errRollback := tx.Rollback()
+			if errRollback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
+			}
 			kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty err: %v, skuProperty: %+v", err, skuProperty)
 			retCode = code.ErrorServer
 			return
@@ -91,7 +100,10 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		}
 		err = repository.CreateSkuInventory(tx, &skuInventory)
 		if err != nil {
-			tx.Rollback()
+			errRollback := tx.Rollback()
+			if errRollback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
+			}
 			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventory err: %v, skuInventory: %+v", err, skuInventory)
 			retCode = code.ErrorServer
 			return
@@ -110,12 +122,20 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		}
 		err = repository.CreateSkuPriceHistory(tx, skuPriceHistory)
 		if err != nil {
-			tx.Rollback()
+			errRollback := tx.Rollback()
+			if errRollback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
+			}
 			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPriceHistory err: %v, skuPriceHistory: %+v", err, skuPriceHistory)
 			retCode = code.ErrorServer
 			return
 		}
-		tx.Commit()
+		err = tx.Commit()
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Commit err: %v", err)
+			retCode = code.ErrorServer
+			return
+		}
 	}
 
 	return
@@ -290,6 +310,12 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	// 开始扣减库存
 	result.List = make([]args.InventoryState, 0)
 	tx := kelvins.XORM_DBEngine.NewSession()
+	err = tx.Begin()
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "DeductInventory Begin err: %v", err)
+		retCode = code.ErrorServer
+		return
+	}
 	for i := 0; i < len(req.List); i++ {
 		allShopIdList[i] = req.List[i].ShopId
 		if len(req.List[i].Detail) == 0 {
@@ -312,13 +338,19 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 				}
 				rows, err := repository.DeductInventory(tx, where, maps)
 				if err != nil {
-					tx.Rollback()
+					errRollback := tx.Rollback()
+					if errRollback != nil {
+						kelvins.ErrLogger.Errorf(ctx, "DeductInventory Rollback err: %v", errRollback)
+					}
 					kelvins.ErrLogger.Errorf(ctx, "DeductInventory err: %v, where: %v, maps: %v", err, where, maps)
 					retCode = code.ErrorServer
 					return
 				}
 				if rows <= 0 {
-					tx.Rollback()
+					errRollback := tx.Rollback()
+					if errRollback != nil {
+						kelvins.ErrLogger.Errorf(ctx, "DeductInventory Rollback err: %v", errRollback)
+					}
 					retCode = code.SkuAmountNotEnough
 					inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
 				}
@@ -335,8 +367,12 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 			return result, code.SkuAmountNotEnough
 		}
 	}
-	tx.Commit()
-
+	err = tx.Commit()
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "DeductInventory Commit err: %v", err)
+		retCode = code.ErrorServer
+		return
+	}
 	retCode = code.Success
 	return
 }

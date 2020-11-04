@@ -25,7 +25,29 @@ service ShopBusinessService {
             get: "/v1/shop_business/shop/material"
         };
     }
+    // 获取店铺数据
+    rpc GetShopInfo(GetShopInfoRequest) returns (GetShopInfoResponse) {
+        option (google.api.http) = {
+            get: "/v1/shop_business/shop/info"
+        };
+    }
 
+}
+
+message GetShopInfoRequest {
+    repeated int64 shop_ids = 1;
+}
+
+message GetShopInfoResponse {
+    CommonResponse common = 1;
+    repeated ShopInfo info_list = 2;
+}
+
+message ShopInfo {
+    int64 shop_id = 1;
+    int64 merchant_id = 5; // 店铺法人
+    string full_name = 6;
+    string shop_code = 7;
 }
 
 message ShopMaterial {
@@ -40,6 +62,7 @@ message ShopMaterial {
     string business_desc = 9;
     string social_credit_code = 10;
     string organization_code = 11;
+    string shop_code = 12;
 }
 
 message GetShopMaterialRequest {
@@ -47,7 +70,8 @@ message GetShopMaterialRequest {
 }
 
 message GetShopMaterialResponse {
-    ShopMaterial material = 1;
+    CommonResponse common = 1;
+    ShopMaterial material = 2;
 }
 
 enum RetCode {

@@ -14,5 +14,6 @@ require (
 	go.mongodb.org/mongo-driver v1.4.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.32.0
+	google.golang.org/protobuf v1.25.0
 	xorm.io/xorm v1.0.3
 )
