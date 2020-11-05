@@ -14,12 +14,18 @@
     "/v1/sku/inventory/deduct": {
       "put": {
         "summary": "扣减库存",
-        "operationId": "DeductInventory",
+        "operationId": "SkuBusinessService_DeductInventory",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/sku_businessDeductInventoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -41,12 +47,18 @@
     "/v1/sku/inventory/list": {
       "get": {
         "summary": "获取店铺sku列表",
-        "operationId": "GetSkuList",
+        "operationId": "SkuBusinessService_GetSkuList",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/sku_businessGetSkuListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -67,12 +79,18 @@
     "/v1/sku/inventory/put_away": {
       "post": {
         "summary": "上架商品",
-        "operationId": "PutAwaySku",
+        "operationId": "SkuBusinessService_PutAwaySku",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/sku_businessPutAwaySkuResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -91,15 +109,54 @@
         ]
       }
     },
+    "/v1/sku/inventory/restore": {
+      "put": {
+        "summary": "恢复库存",
+        "operationId": "SkuBusinessService_RestoreInventory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessRestoreInventoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessRestoreInventoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
     "/v1/sku/property/supplement": {
       "put": {
         "summary": "补充sku商品属性",
-        "operationId": "SupplementSkuProperty",
+        "operationId": "SkuBusinessService_SupplementSkuProperty",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/sku_businessSupplementSkuPropertyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -120,6 +177,39 @@
     }
   },
   "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
     "sku_businessCommonResponse": {
       "type": "object",
       "properties": {
@@ -131,41 +221,20 @@
         }
       }
     },
-    "sku_businessDeductEntryDetail": {
-      "type": "object",
-      "properties": {
-        "sku_code": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
-    },
-    "sku_businessDeductEntryShop": {
-      "type": "object",
-      "properties": {
-        "shop_id": {
-          "type": "string",
-          "format": "int64"
-        },
-        "detail": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/sku_businessDeductEntryDetail"
-          }
-        }
-      }
-    },
     "sku_businessDeductInventoryRequest": {
       "type": "object",
       "properties": {
         "list": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/sku_businessDeductEntryShop"
+            "$ref": "#/definitions/sku_businessInventoryEntryShop"
           }
+        },
+        "out_trade_no": {
+          "type": "string"
+        },
+        "operation_meta": {
+          "$ref": "#/definitions/sku_businessOperationMeta"
         }
       }
     },
@@ -192,6 +261,45 @@
         }
       }
     },
+    "sku_businessInventoryEntryDetail": {
+      "type": "object",
+      "properties": {
+        "sku_code": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "sku_businessInventoryEntryShop": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "detail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessInventoryEntryDetail"
+          }
+        }
+      }
+    },
+    "sku_businessOperationMeta": {
+      "type": "object",
+      "properties": {
+        "op_uid": {
+          "type": "string",
+          "format": "int64"
+        },
+        "op_ip": {
+          "type": "string"
+        }
+      }
+    },
     "sku_businessOperationType": {
       "type": "string",
       "enum": [
@@ -206,18 +314,14 @@
     "sku_businessPutAwaySkuRequest": {
       "type": "object",
       "properties": {
-        "op_uid": {
-          "type": "string",
-          "format": "int64"
-        },
-        "op_ip": {
-          "type": "string"
-        },
         "sku": {
           "$ref": "#/definitions/sku_businessSkuInventoryInfo"
         },
         "operation_type": {
           "$ref": "#/definitions/sku_businessOperationType"
+        },
+        "operation_meta": {
+          "$ref": "#/definitions/sku_businessOperationMeta"
         }
       }
     },
@@ -226,6 +330,35 @@
       "properties": {
         "common": {
           "$ref": "#/definitions/sku_businessCommonResponse"
+        }
+      }
+    },
+    "sku_businessRestoreInventoryRequest": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessInventoryEntryShop"
+          }
+        },
+        "out_trade_no": {
+          "type": "string"
+        },
+        "operation_meta": {
+          "$ref": "#/definitions/sku_businessOperationMeta"
+        }
+      }
+    },
+    "sku_businessRestoreInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
+        "is_success": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -242,7 +375,8 @@
         "SHOP_EXIST",
         "SKU_NOT_EXIST",
         "SKU_EXIST",
-        "SKU_AMOUNT_NOT_ENOUGH"
+        "SKU_AMOUNT_NOT_ENOUGH",
+        "TRANSACTION_FAILED"
       ],
       "default": "SUCCESS"
     },
@@ -308,13 +442,6 @@
     "sku_businessSupplementSkuPropertyRequest": {
       "type": "object",
       "properties": {
-        "op_uid": {
-          "type": "string",
-          "format": "int64"
-        },
-        "op_ip": {
-          "type": "string"
-        },
         "shop_id": {
           "type": "string",
           "format": "int64"
@@ -339,6 +466,12 @@
         },
         "name": {
           "type": "string"
+        },
+        "out_trade_no": {
+          "type": "string"
+        },
+        "operation_meta": {
+          "$ref": "#/definitions/sku_businessOperationMeta"
         },
         "operation_type": {
           "$ref": "#/definitions/sku_businessOperationType"

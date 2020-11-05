@@ -49,6 +49,6 @@ func GetSkuInventoryList(shopIdList []int64, skuCodeList []string) ([]*mysql.Sku
 	return result, err
 }
 
-func DeductInventory(tx *xorm.Session, where, maps map[string]interface{}) (int64, error) {
+func UpdateInventory(tx *xorm.Session, where, maps map[string]interface{}) (int64, error) {
 	return tx.Table(mysql.TableSkuInventory).Where(where).Update(maps)
 }

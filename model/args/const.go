@@ -39,7 +39,7 @@ type InventoryState struct {
 	SkuCodes []string `json:"sku_codes"`
 }
 
-type DeductInventoryRsp struct {
+type OperationInventoryRsp struct {
 	List []InventoryState `json:"list"`
 }
 

@@ -5,10 +5,26 @@ import (
 )
 
 const (
-	TableSkuInventory    = "sku_inventory"
-	TableSkuProperty     = "sku_property"
-	TableSkuPriceHistory = "sku_price_history"
+	TableSkuInventory       = "sku_inventory"
+	TableSkuProperty        = "sku_property"
+	TableSkuPriceHistory    = "sku_price_history"
+	TableSkuInventoryRecord = "sku_inventory_record"
 )
+
+type SkuInventoryRecord struct {
+	Id           int64     `xorm:"pk autoincr comment('自责ID') BIGINT"`
+	ShopId       int64     `xorm:"comment('店铺ID') BIGINT"`
+	SkuCode      string    `xorm:"comment('商品sku') CHAR(40)"`
+	OpType       int       `xorm:"default 0 comment('操作类型，0-入库，1-出库，2-冻结') TINYINT"`
+	OpUid        int64     `xorm:"comment('操作的用户ID') BIGINT"`
+	OpIp         string    `xorm:"comment('操作IP地址') VARCHAR(255)"`
+	AmountBefore int64     `xorm:"comment('变化之前数量') BIGINT"`
+	Amount       int64     `xorm:"comment('操作数量') BIGINT"`
+	OpTxId       string    `xorm:"comment('操作的事务ID') index CHAR(40)"`
+	State        int       `xorm:"default 0 comment('状态，0-有效，1-锁定中，2-无效') TINYINT"`
+	CreateTime   time.Time `xorm:"default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
+	UpdateTime   time.Time `xorm:"default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
+}
 
 type SkuPriceHistory struct {
 	Id         int64     `xorm:"'id' pk autoincr comment('自增ID') BIGINT"`
