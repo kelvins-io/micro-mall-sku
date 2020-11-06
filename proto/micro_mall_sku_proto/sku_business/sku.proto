@@ -48,7 +48,8 @@ message OperationMeta {
 
 message InventoryEntryShop {
     int64 shop_id = 1;
-    repeated InventoryEntryDetail detail = 2;
+    string out_trade_no = 2;
+    repeated InventoryEntryDetail detail = 3;
 }
 
 message InventoryEntryDetail {
@@ -58,7 +59,6 @@ message InventoryEntryDetail {
 
 message DeductInventoryRequest {
     repeated InventoryEntryShop list = 1;
-    string out_trade_no = 2;
     OperationMeta operation_meta = 199;
 }
 
@@ -69,7 +69,6 @@ message DeductInventoryResponse {
 
 message RestoreInventoryRequest {
     repeated InventoryEntryShop list = 1;
-    string out_trade_no = 2;
     OperationMeta operation_meta = 199;
 }
 

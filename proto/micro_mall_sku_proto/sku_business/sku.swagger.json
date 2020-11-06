@@ -230,9 +230,6 @@
             "$ref": "#/definitions/sku_businessInventoryEntryShop"
           }
         },
-        "out_trade_no": {
-          "type": "string"
-        },
         "operation_meta": {
           "$ref": "#/definitions/sku_businessOperationMeta"
         }
@@ -279,6 +276,9 @@
         "shop_id": {
           "type": "string",
           "format": "int64"
+        },
+        "out_trade_no": {
+          "type": "string"
         },
         "detail": {
           "type": "array",
@@ -341,9 +341,6 @@
           "items": {
             "$ref": "#/definitions/sku_businessInventoryEntryShop"
           }
-        },
-        "out_trade_no": {
-          "type": "string"
         },
         "operation_meta": {
           "$ref": "#/definitions/sku_businessOperationMeta"

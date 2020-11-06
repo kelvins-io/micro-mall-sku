@@ -3,7 +3,6 @@ package startup
 import (
 	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/kelvins/config"
-	"gitee.com/kelvins-io/kelvins/config/setting"
 	"log"
 )
 
@@ -20,14 +19,14 @@ func LoadConfig() error {
 	log.Printf("[info] Load default config %s", SectionEmailConfig)
 	vars.EmailConfigSetting = new(vars.EmailConfigSettingS)
 	config.MapConfig(SectionEmailConfig, vars.EmailConfigSetting)
-	// 用户注册通知
-	log.Printf("[info] Load default config %s", SectionQueueUserRegisterNotice)
-	vars.QueueAMQPSettingUserRegisterNotice = new(setting.QueueAMQPSettingS)
-	config.MapConfig(SectionQueueUserRegisterNotice, vars.QueueAMQPSettingUserRegisterNotice)
-	// 用户事件通知
-	log.Printf("[info] Load default config %s", SectionQueueUserStateNotice)
-	vars.QueueAMQPSettingUserStateNotice = new(setting.QueueAMQPSettingS)
-	config.MapConfig(SectionQueueUserStateNotice, vars.QueueAMQPSettingUserStateNotice)
+	//// 用户注册通知
+	//log.Printf("[info] Load default config %s", SectionQueueUserRegisterNotice)
+	//vars.QueueAMQPSettingUserRegisterNotice = new(setting.QueueAMQPSettingS)
+	//config.MapConfig(SectionQueueUserRegisterNotice, vars.QueueAMQPSettingUserRegisterNotice)
+	//// 用户事件通知
+	//log.Printf("[info] Load default config %s", SectionQueueUserStateNotice)
+	//vars.QueueAMQPSettingUserStateNotice = new(setting.QueueAMQPSettingS)
+	//config.MapConfig(SectionQueueUserStateNotice, vars.QueueAMQPSettingUserStateNotice)
 	// 加载mongodb 配置
 	log.Printf("[info] Load default config %s", SectionMongoDB)
 	vars.MongoDBSetting = new(vars.MongoDBSettingS)
