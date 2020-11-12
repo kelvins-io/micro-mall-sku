@@ -18,7 +18,6 @@ func (s *SkuBusinessServer) PutAwaySku(ctx context.Context, req *sku_business.Pu
 	var result sku_business.PutAwaySkuResponse
 	result.Common = &sku_business.CommonResponse{
 		Code: sku_business.RetCode_SUCCESS,
-		Msg:  "",
 	}
 	if req.Sku.SkuCode == "" {
 		result.Common.Code = sku_business.RetCode_SKU_NOT_EXIST

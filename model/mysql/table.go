@@ -51,21 +51,21 @@ type SkuInventory struct {
 }
 
 type SkuProperty struct {
-	Id            int64     `xorm:"'id' pk autoincr comment('ID') BIGINT"`
-	Code          string    `xorm:"'code' not null comment('商品唯一编号') index CHAR(64)"`
-	Price         string    `xorm:"'price' comment('商品当前价格') DECIMAL(10,2)"`
-	Name          string    `xorm:"'name' comment('商品名称') index VARCHAR(255)"`
-	Desc          string    `xorm:"'desc' comment('商品描述') TEXT"`
-	Production    string    `xorm:"'production' comment('生产企业') VARCHAR(1024)"`
-	Supplier      string    `xorm:"'supplier' comment('供应商') VARCHAR(1024)"`
-	Category      int       `xorm:"'category' comment('商品类别') INT"`
-	Title         string    `xorm:"'title' comment('商品标题') VARCHAR(255)"`
-	SubTitle      string    `xorm:"'sub_title' comment('商品副标题') VARCHAR(255)"`
-	Color         string    `xorm:"'color' comment('商品颜色') VARCHAR(64)"`
-	ColorCode     int       `xorm:"'color_code' comment('商品颜色代码') INT"`
-	Specification string    `xorm:"'specification' comment('商品规格') VARCHAR(255)"`
-	DescLink      string    `xorm:"'desc_link' comment('商品介绍链接') VARCHAR(255)"`
-	State         int       `xorm:"'state' default 0 comment('商品状态，0-有效，1-无效，2-锁定') TINYINT"`
-	CreateTime    time.Time `xorm:"'create_time' not null comment('创建时间') DATETIME"`
-	UpdateTime    time.Time `xorm:"'update_time' not null comment('更新时间') DATETIME"`
+	Id            int64     `bson:"id" xorm:"'id' pk autoincr comment('ID') BIGINT"`
+	Code          string    `bson:"code" xorm:"'code' not null comment('商品唯一编号') index CHAR(64)"`
+	Price         string    `bson:"price" xorm:"'price' comment('商品当前价格') DECIMAL(10,2)"`
+	Name          string    `bson:"name" xorm:"'name' comment('商品名称') index VARCHAR(255)"`
+	Desc          string    `bson:"desc" xorm:"'desc' comment('商品描述') TEXT"`
+	Production    string    `bson:"production" xorm:"'production' comment('生产企业') VARCHAR(1024)"`
+	Supplier      string    `bson:"supplier" xorm:"'supplier' comment('供应商') VARCHAR(1024)"`
+	Category      int       `bson:"category" xorm:"'category' comment('商品类别') INT"`
+	Title         string    `bson:"title" xorm:"'title' comment('商品标题') VARCHAR(255)"`
+	SubTitle      string    `bson:"sub_title" xorm:"'sub_title' comment('商品副标题') VARCHAR(255)"`
+	Color         string    `bson:"color" xorm:"'color' comment('商品颜色') VARCHAR(64)"`
+	ColorCode     int       `bson:"color_code" xorm:"'color_code' comment('商品颜色代码') INT"`
+	Specification string    `bson:"specification" xorm:"'specification' comment('商品规格') VARCHAR(255)"`
+	DescLink      string    `bson:"desc_link" xorm:"'desc_link' comment('商品介绍链接') VARCHAR(255)"`
+	State         int       `bson:"state" xorm:"'state' default 0 comment('商品状态，0-有效，1-无效，2-锁定') TINYINT"`
+	CreateTime    time.Time `bson:"create_time" xorm:"'create_time' not null comment('创建时间') DATETIME"`
+	UpdateTime    time.Time `bson:"update_time" xorm:"'update_time' not null comment('更新时间') DATETIME"`
 }

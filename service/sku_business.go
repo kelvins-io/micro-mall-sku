@@ -159,6 +159,13 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+		// 增加扩展属性
+		err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
+			return code.ErrorServer
+		}
+		return code.Success
 	} else if req.OperationType == sku_business.OperationType_UPDATE {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {

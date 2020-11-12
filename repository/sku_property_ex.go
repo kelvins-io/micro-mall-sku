@@ -8,19 +8,19 @@ import (
 	"sync"
 )
 
-var one sync.Once
+var oneSkuPropertyEx sync.Once
 
-func createIndexes() {
-	one.Do(func() {
+func createIndexesOfSkuPropertyEx() {
+	oneSkuPropertyEx.Do(func() {
 		var uniques = []string{"sku_code,shop_id"}
 		var indexes = []string{"shape", "shop_id", "sku_code"}
 		vars.MongoDBDatabase.Collection(mongodb.TableSkuPropertyEx).EnsureIndexes(context.Background(), uniques, indexes)
 	})
 }
 
-func CreateSkuPropertyEx(ctx context.Context, req *args.SkuPropertyEx) (err error) {
+func CreateSkuPropertyEx(ctx context.Context, req interface{}) (err error) {
 	// 创建索引
-	createIndexes()
+	createIndexesOfSkuPropertyEx()
 	// 插入记录
 	_, err = vars.MongoDBDatabase.Collection(mongodb.TableSkuPropertyEx).InsertOne(ctx, req)
 	return
