@@ -68,6 +68,7 @@ func (s *SkuBusinessServer) GetSkuList(ctx context.Context, req *sku_business.Ge
 			State:         list[i].State,
 			Amount:        list[i].Amount,
 			ShopId:        list[i].ShopId,
+			Version:       int64(list[i].Version),
 		}
 		result.List[i] = info
 	}

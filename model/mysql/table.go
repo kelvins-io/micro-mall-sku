@@ -40,13 +40,14 @@ type SkuPriceHistory struct {
 }
 
 type SkuInventory struct {
-	Id         int64     `xorm:"'id' pk autoincr comment('商品库存ID') BIGINT"`
-	SkuCode    string    `xorm:"'sku_code' not null comment('商品编码') unique unique(sku_code_shop_id_index) CHAR(64)"`
-	Amount     int64     `xorm:"'amount' comment('库存数量') BIGINT"`
-	Price      string    `xorm:"'price' comment('入库单价') DECIMAL(32,16)"`
-	ShopId     int64     `xorm:"'shop_id' not null comment('所属店铺ID') index unique(sku_code_shop_id_index) BIGINT"`
-	CreateTime time.Time `xorm:"'create_time' not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
-	UpdateTime time.Time `xorm:"'update_time' not null default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
+	Id         int64     `xorm:"pk autoincr comment('商品库存ID') BIGINT"`
+	SkuCode    string    `xorm:"not null comment('商品编码') unique unique(sku_code_shop_id_index) CHAR(64)"`
+	Amount     int64     `xorm:"comment('库存数量') BIGINT"`
+	Price      string    `xorm:"comment('入库单价') DECIMAL(32,16)"`
+	ShopId     int64     `xorm:"not null comment('所属店铺ID') index unique(sku_code_shop_id_index) BIGINT"`
+	Version    int       `xorm:"not null default 1 comment('商品版本') INT"`
+	CreateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
+	UpdateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
 }
 
 type SkuProperty struct {

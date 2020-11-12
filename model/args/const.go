@@ -15,10 +15,9 @@ type SkuInventoryInfo struct {
 	Specification string `json:"specification"`
 	DescLink      string `json:"desc_link"`
 	State         int32  `json:"state"`
-	// 其他属性...
-
-	Amount int64 `json:"amount"`
-	ShopId int64 `json:"shop_id"`
+	Amount        int64  `json:"amount"`
+	ShopId        int64  `json:"shop_id"`
+	Version       int    `json:"version"`
 }
 
 type SkuPropertyEx struct {

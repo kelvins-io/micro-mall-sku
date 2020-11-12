@@ -167,6 +167,7 @@ type SkuInventory struct {
 	Amount     int64     `xorm:"comment('库存数量') BIGINT"`
 	Price      string    `xorm:"comment('入库单价') DECIMAL(32,16)"`
 	ShopId     int64     `xorm:"not null comment('所属店铺ID') index unique(sku_code_shop_id_index) BIGINT"`
+	Version    int       `xorm:"not null default 1 comment('商品版本') INT"`
 	CreateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
 	UpdateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
 }

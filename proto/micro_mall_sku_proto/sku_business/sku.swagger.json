@@ -425,6 +425,10 @@
           "type": "integer",
           "format": "int32"
         },
+        "version": {
+          "type": "string",
+          "format": "int64"
+        },
         "amount": {
           "type": "string",
           "format": "int64"

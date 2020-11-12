@@ -12,11 +12,12 @@ func CreateSkuInventory(tx *xorm.Session, model *mysql.SkuInventory) (err error)
 	return
 }
 
-func CheckSkuInventoryExist(skuCode string) (exist bool, err error) {
+func CheckSkuInventoryExist(shopId int64, skuCode string) (exist bool, err error) {
 	var model mysql.SkuInventory
 	_, err = kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory).
 		Select("id").
 		Where("sku_code = ?", skuCode).
+		Where("shop_id = ?", shopId).
 		Where("amount >= 0").
 		Get(&model)
 	if err != nil {

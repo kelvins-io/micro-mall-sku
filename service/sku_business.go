@@ -41,11 +41,10 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			return
 		}
 	}
-
 	if req.OperationType == sku_business.OperationType_CREATE {
-		exist, err := repository.CheckSkuInventoryExist(req.Sku.SkuCode)
+		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v, SkuCode: %+v", err, req.Sku.SkuCode)
+			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
 			retCode = code.ErrorServer
 			return
 		}
@@ -53,7 +52,6 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.SkuCodeExist
 			return
 		}
-
 		tx := kelvins.XORM_DBEngine.NewSession()
 		err = tx.Begin()
 		if err != nil {
@@ -160,6 +158,19 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+	} else if req.OperationType == sku_business.OperationType_UPDATE {
+		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
+			retCode = code.ErrorServer
+			return
+		}
+		if !exist {
+			retCode = code.SkuCodeNotExist
+			return
+		}
+		// 增加库存
+
 	}
 
 	return
@@ -206,6 +217,7 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 			State:         int32(skuPropertyList[i].State),
 			Amount:        skuCodeToInventory[skuPropertyList[i].Code].Amount,
 			ShopId:        skuCodeToInventory[skuPropertyList[i].Code].ShopId,
+			Version:       skuCodeToInventory[skuPropertyList[i].Code].Version,
 		}
 		result[i] = skuInventoryInfo
 	}
@@ -234,6 +246,15 @@ func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuP
 		if rsp == nil || rsp.Material == nil || rsp.Material.ShopId <= 0 {
 			return code.ShopBusinessNotExist
 		}
+	}
+	// 检查商品是否存在
+	exist, err := repository.CheckSkuInventoryExist(req.ShopId, req.SkuCode)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.ShopId, req.SkuCode)
+		return code.ErrorServer
+	}
+	if !exist {
+		return code.SkuCodeNotExist
 	}
 
 	if req.OperationType == sku_business.OperationType_CREATE {
