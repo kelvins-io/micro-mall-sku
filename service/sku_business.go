@@ -116,12 +116,12 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			ShopId:     req.Sku.ShopId,
 			SkuCode:    req.Sku.SkuCode,
 			Price:      req.Sku.Price,
-			Tsp:        int(time.Now().Unix()),
-			Reason:     req.Sku.Name,
-			CreateTime: time.Now(),
-			UpdateTime: time.Now(),
+			Reason:     "入库",
+			Version:    1, // 入库版本为1
 			OpUid:      req.OperationMeta.OpUid,
 			OpIp:       req.OperationMeta.OpIp,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
 		}
 		err = repository.CreateSkuPriceHistory(tx, skuPriceHistory)
 		if err != nil {
@@ -139,6 +139,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			Amount:     req.Sku.Amount,
 			Price:      req.Sku.Price,
 			ShopId:     req.Sku.ShopId,
+			Version:    1, // 入库版本为1
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}
@@ -554,4 +555,70 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	}
 	retCode = code.Success
 	return
+}
+
+func FiltrateSkuPriceVersion(ctx context.Context, req *sku_business.FiltrateSkuPriceVersionRequest) ([]*sku_business.FiltrateSkuPriceVersionResult, int) {
+	result := make([]*sku_business.FiltrateSkuPriceVersionResult, 0)
+	retCode := code.Success
+	// 价格策略
+	switch req.PolicyType {
+	case sku_business.SkuPricePolicyFiltrateType_VERSION_SECTION:
+	case sku_business.SkuPricePolicyFiltrateType_VERSION_LOWER:
+	case sku_business.SkuPricePolicyFiltrateType_VERSION_UPPER:
+	default:
+		return result, code.SkuPriceVersionPolicyNotSupport
+	}
+	// 查询价格是否在预定版本范围
+	for i := 0; i < len(req.SetList); i++ {
+		resultOne := &sku_business.FiltrateSkuPriceVersionResult{
+			ShopId:  req.SetList[i].ShopId,
+			SkuCode: make([]string, 0),
+		}
+		for j := 0; j < len(req.SetList[i].EntryList); j++ {
+			row := req.SetList[i].EntryList[j]
+			where := map[string]interface{}{
+				"shop_id":  req.SetList[i].ShopId,
+				"sku_code": row.SkuCode,
+			}
+			orderByDesc := []string{"version"}
+			limit := int(req.LimitUpper)
+			skuPriceHistoryList, err := repository.GetSkuPriceHistory("price,version", where, orderByDesc, limit)
+			if err != nil {
+				kelvins.ErrLogger.Errorf(ctx, "GetSkuPriceHistory err: %v, where: %+v,shopIdList: %v,skuCodeList:%v", err, where, nil, nil)
+				return result, code.ErrorServer
+			}
+			if len(skuPriceHistoryList) == 0 {
+				resultOne.SkuCode = append(resultOne.SkuCode, row.SkuCode)
+				retCode = code.SkuPriceVersionNotExist
+				continue
+			}
+			upperVersion := skuPriceHistoryList[len(skuPriceHistoryList)-1]
+			lowerVersion := skuPriceHistoryList[0]
+			switch req.PolicyType {
+			case sku_business.SkuPricePolicyFiltrateType_VERSION_SECTION:
+				if row.Version > int64(upperVersion.Version) || row.Version < int64(upperVersion.Version) {
+					resultOne.SkuCode = append(resultOne.SkuCode, row.SkuCode)
+					retCode = code.SkuPriceVersionNotExist
+					continue
+				}
+			case sku_business.SkuPricePolicyFiltrateType_VERSION_LOWER:
+				if row.Version < int64(lowerVersion.Version) {
+					resultOne.SkuCode = append(resultOne.SkuCode, row.SkuCode)
+					retCode = code.SkuPriceVersionNotExist
+					continue
+				}
+			case sku_business.SkuPricePolicyFiltrateType_VERSION_UPPER:
+				if row.Version > int64(upperVersion.Version) {
+					resultOne.SkuCode = append(resultOne.SkuCode, row.SkuCode)
+					retCode = code.SkuPriceVersionNotExist
+					continue
+				}
+			}
+		}
+		if len(resultOne.SkuCode) > 0 {
+			result = append(result, resultOne)
+		}
+	}
+
+	return result, retCode
 }

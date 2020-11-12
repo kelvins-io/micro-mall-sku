@@ -142,6 +142,39 @@
         ]
       }
     },
+    "/v1/sku/price/filtrate": {
+      "post": {
+        "summary": "按策略筛选商品价格版本",
+        "operationId": "SkuBusinessService_FiltrateSkuPriceVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessFiltrateSkuPriceVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessFiltrateSkuPriceVersionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
     "/v1/sku/property/supplement": {
       "put": {
         "summary": "补充sku商品属性",
@@ -244,6 +277,53 @@
         "is_success": {
           "type": "boolean",
           "format": "boolean"
+        }
+      }
+    },
+    "sku_businessFiltrateSkuPriceVersionRequest": {
+      "type": "object",
+      "properties": {
+        "set_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessSkuPriceVersionSet"
+          }
+        },
+        "policy_type": {
+          "$ref": "#/definitions/sku_businessSkuPricePolicyFiltrateType"
+        },
+        "limit_upper": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sku_businessFiltrateSkuPriceVersionResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessFiltrateSkuPriceVersionResult"
+          }
+        }
+      }
+    },
+    "sku_businessFiltrateSkuPriceVersionResult": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sku_code": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -373,7 +453,10 @@
         "SKU_NOT_EXIST",
         "SKU_EXIST",
         "SKU_AMOUNT_NOT_ENOUGH",
-        "TRANSACTION_FAILED"
+        "TRANSACTION_FAILED",
+        "SKU_PRICE_VERSION_NOT_EXIST",
+        "SKU_PRICE_VERSION_POLICY_TYPE_NOT_SUPPORT",
+        "SKU_PRICE_VERSION_POLICY_DATA_FORMAT_ERR"
       ],
       "default": "SUCCESS"
     },
@@ -439,6 +522,45 @@
         }
       },
       "title": "商品库存数据"
+    },
+    "sku_businessSkuPricePolicyFiltrateType": {
+      "type": "string",
+      "enum": [
+        "VERSION_SECTION",
+        "VERSION_UPPER",
+        "VERSION_LOWER"
+      ],
+      "default": "VERSION_SECTION"
+    },
+    "sku_businessSkuPriceVersionEntry": {
+      "type": "object",
+      "properties": {
+        "sku_code": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "sku_businessSkuPriceVersionSet": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "entry_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessSkuPriceVersionEntry"
+          }
+        }
+      }
     },
     "sku_businessSupplementSkuPropertyRequest": {
       "type": "object",

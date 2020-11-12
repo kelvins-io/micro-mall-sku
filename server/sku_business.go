@@ -149,3 +149,27 @@ func (s *SkuBusinessServer) RestoreInventory(ctx context.Context, req *sku_busin
 	result.IsSuccess = true
 	return &result, nil
 }
+
+func (s *SkuBusinessServer) FiltrateSkuPriceVersion(ctx context.Context, req *sku_business.FiltrateSkuPriceVersionRequest) (*sku_business.FiltrateSkuPriceVersionResponse, error) {
+	result := &sku_business.FiltrateSkuPriceVersionResponse{Common: &sku_business.CommonResponse{
+		Code: sku_business.RetCode_SUCCESS,
+	}}
+	list, retCode := service.FiltrateSkuPriceVersion(ctx, req)
+	if retCode != code.Success {
+		switch retCode {
+		case code.SkuCodeNotExist:
+			result.Common.Code = sku_business.RetCode_SKU_NOT_EXIST
+		case code.SkuPriceVersionNotExist:
+			result.Common.Code = sku_business.RetCode_SKU_PRICE_VERSION_NOT_EXIST
+		case code.SkuPriceVersionPolicyNotSupport:
+			result.Common.Code = sku_business.RetCode_SKU_PRICE_VERSION_POLICY_TYPE_NOT_SUPPORT
+		case code.SkuPriceVersionPolicyDataFormatErr:
+			result.Common.Code = sku_business.RetCode_SKU_PRICE_VERSION_POLICY_DATA_FORMAT_ERR
+		default:
+			result.Common.Code = sku_business.RetCode_ERROR
+		}
+		return result, nil
+	}
+	result.Result = list
+	return result, nil
+}
