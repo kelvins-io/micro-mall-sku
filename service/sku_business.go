@@ -25,7 +25,6 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			return
 		}
 		defer conn.Close()
-
 		client := shop_business.NewShopBusinessServiceClient(conn)
 		r := shop_business.GetShopMaterialRequest{
 			ShopId: req.Sku.ShopId,
@@ -159,12 +158,14 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+
 		// 增加扩展属性
-		err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
-			return code.ErrorServer
-		}
+		go func() {
+			err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
+			if err != nil {
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
+			}
+		}()
 		return code.Success
 	} else if req.OperationType == sku_business.OperationType_UPDATE {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
