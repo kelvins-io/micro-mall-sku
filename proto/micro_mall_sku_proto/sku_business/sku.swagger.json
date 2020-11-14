@@ -142,6 +142,72 @@
         ]
       }
     },
+    "/v1/sku/inventory/search": {
+      "post": {
+        "summary": "商品搜索",
+        "operationId": "SkuBusinessService_SearchSkuInventory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessSearchSkuInventoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessSearchSkuInventoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
+    "/v1/sku/inventory/search/sync": {
+      "post": {
+        "summary": "商品库存搜索同步数据(请在业务不繁忙时调用)",
+        "operationId": "SkuBusinessService_SearchSyncSkuInventory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessSearchSyncSkuInventoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessSearchSyncSkuInventoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
     "/v1/sku/price/filtrate": {
       "post": {
         "summary": "按策略筛选商品价格版本",
@@ -459,6 +525,71 @@
         "SKU_PRICE_VERSION_POLICY_DATA_FORMAT_ERR"
       ],
       "default": "SUCCESS"
+    },
+    "sku_businessSearchSkuInventoryEntry": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "$ref": "#/definitions/sku_businessSkuInventoryInfo"
+        },
+        "score": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "sku_businessSearchSkuInventoryRequest": {
+      "type": "object",
+      "properties": {
+        "keyword": {
+          "type": "string"
+        }
+      }
+    },
+    "sku_businessSearchSkuInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessSearchSkuInventoryEntry"
+          }
+        }
+      }
+    },
+    "sku_businessSearchSyncSkuInventoryRequest": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page_num": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "sku_businessSearchSyncSkuInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
+        "info": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sku_businessSkuInventoryInfo"
+          }
+        }
+      }
     },
     "sku_businessSkuInventoryInfo": {
       "type": "object",

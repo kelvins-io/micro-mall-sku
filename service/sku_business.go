@@ -7,10 +7,12 @@ import (
 	"gitee.com/cristiane/micro-mall-sku/model/mysql"
 	"gitee.com/cristiane/micro-mall-sku/pkg/code"
 	"gitee.com/cristiane/micro-mall-sku/pkg/util"
+	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_sku_proto/sku_business"
 	"gitee.com/cristiane/micro-mall-sku/repository"
 	"gitee.com/kelvins-io/kelvins"
+	"strconv"
 	"time"
 )
 
@@ -185,12 +187,12 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 	return
 }
 
-func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (result []args.SkuInventoryInfo, retCode int) {
+func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (result []*sku_business.SkuInventoryInfo, retCode int) {
 	retCode = code.Success
-	result = make([]args.SkuInventoryInfo, 0)
-	skuInventoryList, err := repository.GetSkuInventoryListByShopId(req.ShopId)
+	result = make([]*sku_business.SkuInventoryInfo, 0)
+	skuInventoryList, err := repository.GetSkuInventoryListByShopId(shopId, pageSize, pageNum)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryListByShopId err: %v, ShopId: %+v", err, req.ShopId)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryListByShopId err: %v, ShopId: %+v", err, shopId)
 		retCode = code.ErrorServer
 		return
 	}
@@ -200,16 +202,15 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 		skuCodeList[i] = skuInventoryList[i].SkuCode
 		skuCodeToInventory[skuInventoryList[i].SkuCode] = skuInventoryList[i]
 	}
-
 	skuPropertyList, err := repository.GetSkuPropertyList(skuCodeList)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, skuCodeList: %+v", err, skuCodeList)
 		retCode = code.ErrorServer
 		return
 	}
-	result = make([]args.SkuInventoryInfo, len(skuPropertyList))
+	result = make([]*sku_business.SkuInventoryInfo, len(skuPropertyList))
 	for i := 0; i < len(skuPropertyList); i++ {
-		skuInventoryInfo := args.SkuInventoryInfo{
+		skuInventoryInfo := &sku_business.SkuInventoryInfo{
 			SkuCode:       skuPropertyList[i].Code,
 			Name:          skuPropertyList[i].Name,
 			Price:         skuPropertyList[i].Price,
@@ -226,12 +227,110 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 			State:         int32(skuPropertyList[i].State),
 			Amount:        skuCodeToInventory[skuPropertyList[i].Code].Amount,
 			ShopId:        skuCodeToInventory[skuPropertyList[i].Code].ShopId,
-			Version:       skuCodeToInventory[skuPropertyList[i].Code].Version,
+			Version:       int64(skuCodeToInventory[skuPropertyList[i].Code].Version),
 		}
 		result[i] = skuInventoryInfo
 	}
 
 	return
+}
+
+func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventoryRequest) ([]*sku_business.SearchSkuInventoryEntry, int) {
+	result := make([]*sku_business.SearchSkuInventoryEntry, 0)
+	serverName := args.RpcServiceMicroMallSearch
+	conn, err := util.GetGrpcClient(serverName)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
+		return result, code.ErrorServer
+	}
+	defer conn.Close()
+	client := search_business.NewSearchBusinessServiceClient(conn)
+	r := search_business.SkuInventorySearchRequest{
+		SkuKey: req.Keyword,
+	}
+	rsp, err := client.SkuInventorySearch(ctx, &r)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch %v,err: %v, req: %+v", serverName, err, r)
+		return result, code.ErrorServer
+	}
+	if rsp.Common.Code != search_business.RetCode_SUCCESS {
+		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch %v,err: %v, rsp: %+v", serverName, err, rsp)
+		return result, code.ErrorServer
+	}
+	if len(rsp.List) == 0 {
+		return result, code.Success
+	}
+	shopIds := make([]int64, 0)
+	skuCodes := make([]string, len(rsp.List))
+	for i := 0; i < len(rsp.List); i++ {
+		shopId, err := strconv.ParseInt(rsp.List[i].ShopId, 10, 64)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "SearchSkuInventory ParseI shopId err: %v, shopId: %s", err, rsp.List[i].ShopId)
+			return result, code.ErrorServer
+		}
+		if shopId > 0 {
+			shopIds = append(shopIds, shopId)
+		}
+		skuCodes[i] = rsp.List[i].SkuCode
+	}
+	skuInventoryList, err := repository.GetSkuInventoryList(shopIds, skuCodes)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList  err: %v, shopIds: %+v,skuCodes: %+v", err, shopIds, skuCodes)
+		return result, code.ErrorServer
+	}
+	if len(skuInventoryList) == 0 {
+		return result, code.Success
+	}
+	skuCodeToSkuInventory := make(map[string]*mysql.SkuInventory)
+	for i := 0; i < len(skuInventoryList); i++ {
+		skuCodeToSkuInventory[skuInventoryList[i].SkuCode] = skuInventoryList[i]
+	}
+	skuPropertyList, err := repository.GetSkuPropertyList(skuCodes)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList  err: %v, skuCodes: %+v", err, skuCodes)
+		return result, code.ErrorServer
+	}
+	skuCodeToSkuProperty := make(map[string]mysql.SkuProperty)
+	for i := 0; i < len(skuPropertyList); i++ {
+		skuCodeToSkuProperty[skuPropertyList[i].Code] = skuPropertyList[i]
+	}
+	result = make([]*sku_business.SearchSkuInventoryEntry, len(rsp.List))
+	for i := 0; i < len(rsp.List); i++ {
+		row := rsp.List[i]
+		shopId, _ := strconv.ParseInt(rsp.List[i].ShopId, 10, 0)
+		entry := &sku_business.SearchSkuInventoryEntry{
+			Info: &sku_business.SkuInventoryInfo{
+				SkuCode:       row.SkuCode,
+				Name:          row.SkuName,
+				Price:         skuCodeToSkuProperty[row.SkuCode].Price,
+				Title:         skuCodeToSkuProperty[row.SkuCode].Title,
+				SubTitle:      skuCodeToSkuProperty[row.SkuCode].SubTitle,
+				Desc:          skuCodeToSkuProperty[row.SkuCode].Desc,
+				Production:    skuCodeToSkuProperty[row.SkuCode].Production,
+				Supplier:      skuCodeToSkuProperty[row.SkuCode].Supplier,
+				Category:      int32(skuCodeToSkuProperty[row.SkuCode].Category),
+				Color:         skuCodeToSkuProperty[row.SkuCode].Color,
+				ColorCode:     int32(skuCodeToSkuProperty[row.SkuCode].ColorCode),
+				Specification: skuCodeToSkuProperty[row.SkuCode].Specification,
+				DescLink:      skuCodeToSkuProperty[row.SkuCode].DescLink,
+				State:         int32(skuCodeToSkuProperty[row.SkuCode].State),
+				Version:       int64(skuCodeToSkuInventory[row.SkuCode].Version),
+				Amount:        skuCodeToSkuInventory[row.SkuCode].Amount,
+				ShopId:        shopId,
+			},
+			Score: row.Score,
+		}
+		result[i] = entry
+	}
+	return result, code.Success
+}
+
+func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (result []*sku_business.SkuInventoryInfo, retCode int) {
+	return getSkuList(ctx, req.ShopId, 0, 0)
+}
+
+func SyncSkuInventory(ctx context.Context, req *sku_business.SearchSyncSkuInventoryRequest) (result []*sku_business.SkuInventoryInfo, retCode int) {
+	return getSkuList(ctx, req.ShopId, int(req.PageSize), int(req.PageNum))
 }
 
 func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuPropertyRequest) int {

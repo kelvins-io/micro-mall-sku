@@ -43,6 +43,7 @@ type OperationInventoryRsp struct {
 }
 
 const (
-	RpcServiceMicroMallUsers = "micro-mall-users"
-	RpcServiceMicroMallShop  = "micro-mall-shop"
+	RpcServiceMicroMallUsers  = "micro-mall-users"
+	RpcServiceMicroMallShop   = "micro-mall-shop"
+	RpcServiceMicroMallSearch = "micro-mall-search"
 )

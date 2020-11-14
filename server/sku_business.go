@@ -48,30 +48,7 @@ func (s *SkuBusinessServer) GetSkuList(ctx context.Context, req *sku_business.Ge
 	if retCode != code.Success {
 		return &result, errcode.TogRPCError(retCode)
 	}
-	result.List = make([]*sku_business.SkuInventoryInfo, len(list))
-	for i := 0; i < len(list); i++ {
-		info := &sku_business.SkuInventoryInfo{
-			SkuCode:       list[i].SkuCode,
-			Name:          list[i].Name,
-			Price:         list[i].Price,
-			Title:         list[i].Title,
-			SubTitle:      list[i].SubTitle,
-			Desc:          list[i].Desc,
-			Production:    list[i].Production,
-			Supplier:      list[i].Supplier,
-			Category:      list[i].Category,
-			Color:         list[i].Color,
-			ColorCode:     list[i].ColorCode,
-			Specification: list[i].Specification,
-			DescLink:      list[i].DescLink,
-			State:         list[i].State,
-			Amount:        list[i].Amount,
-			ShopId:        list[i].ShopId,
-			Version:       int64(list[i].Version),
-		}
-		result.List[i] = info
-	}
-
+	result.List = list
 	return &result, nil
 }
 
@@ -170,5 +147,37 @@ func (s *SkuBusinessServer) FiltrateSkuPriceVersion(ctx context.Context, req *sk
 		return result, nil
 	}
 	result.Result = list
+	return result, nil
+}
+
+func (s *SkuBusinessServer) SearchSyncSkuInventory(ctx context.Context, req *sku_business.SearchSyncSkuInventoryRequest) (*sku_business.SearchSyncSkuInventoryResponse, error) {
+	result := &sku_business.SearchSyncSkuInventoryResponse{
+		Common: &sku_business.CommonResponse{
+			Code: sku_business.RetCode_SUCCESS,
+		},
+		Info: make([]*sku_business.SkuInventoryInfo, 0),
+	}
+	list, retCode := service.SyncSkuInventory(ctx, req)
+	if retCode != code.Success {
+		result.Common.Code = sku_business.RetCode_ERROR
+		return result, nil
+	}
+	result.Info = list
+	return result, nil
+}
+
+func (s *SkuBusinessServer) SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventoryRequest) (*sku_business.SearchSkuInventoryResponse, error) {
+	result := &sku_business.SearchSkuInventoryResponse{
+		Common: &sku_business.CommonResponse{
+			Code: sku_business.RetCode_SUCCESS,
+		},
+		List: nil,
+	}
+	list, retCode := service.SearchSkuInventory(ctx, req)
+	if retCode != code.Success {
+		result.Common.Code = sku_business.RetCode_ERROR
+		return result, nil
+	}
+	result.List = list
 	return result, nil
 }

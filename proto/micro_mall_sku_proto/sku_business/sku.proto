@@ -46,6 +46,20 @@ service SkuBusinessService {
             body:"*"
         };
     }
+    // 商品库存搜索同步数据(请在业务不繁忙时调用)
+    rpc SearchSyncSkuInventory(SearchSyncSkuInventoryRequest) returns (SearchSyncSkuInventoryResponse) {
+        option (google.api.http) = {
+            post: "/v1/sku/inventory/search/sync"
+            body:"*"
+        };
+    }
+    // 商品搜索
+    rpc SearchSkuInventory(SearchSkuInventoryRequest) returns (SearchSkuInventoryResponse) {
+        option (google.api.http) = {
+            post: "/v1/sku/inventory/search"
+            body:"*"
+        };
+    }
 
 }
 
@@ -116,6 +130,31 @@ message FiltrateSkuPriceVersionResult {
 message FiltrateSkuPriceVersionResponse {
     CommonResponse common = 1;
     repeated FiltrateSkuPriceVersionResult result = 2; // 返回不满足筛选区间的商品列表
+}
+
+message SearchSkuInventoryRequest {
+    string keyword = 1;
+}
+
+message SearchSkuInventoryEntry {
+    SkuInventoryInfo info = 1;
+    double score = 2;
+}
+
+message SearchSkuInventoryResponse {
+    CommonResponse common = 1;
+    repeated SearchSkuInventoryEntry list  = 2;
+}
+
+message SearchSyncSkuInventoryRequest {
+    int64 shop_id = 1; // shop_id为0则同步所有库存
+    int64 page_size = 2; // 大于0
+    int64 page_num = 3; // 大于0
+}
+
+message SearchSyncSkuInventoryResponse {
+    CommonResponse common = 1;
+    repeated SkuInventoryInfo info  = 2;
 }
 
 message SupplementSkuPropertyRequest {

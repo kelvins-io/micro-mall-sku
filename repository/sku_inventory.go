@@ -29,12 +29,15 @@ func CheckSkuInventoryExist(shopId int64, skuCode string) (exist bool, err error
 	return false, nil
 }
 
-func GetSkuInventoryListByShopId(shopId int64) ([]mysql.SkuInventory, error) {
+func GetSkuInventoryListByShopId(shopId int64, pageSize, pageNum int) ([]mysql.SkuInventory, error) {
 	var result = make([]mysql.SkuInventory, 0)
 	session := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory)
 	session = session.Where("amount >= 0")
 	if shopId > 0 {
 		session = session.Where("shop_id = ?", shopId)
+	}
+	if pageSize > 0 && pageNum >= 1 {
+		session = session.Limit(pageSize, (pageNum-1)*pageSize)
 	}
 	err := session.Desc("create_time").Find(&result)
 	return result, err
@@ -42,11 +45,15 @@ func GetSkuInventoryListByShopId(shopId int64) ([]mysql.SkuInventory, error) {
 
 func GetSkuInventoryList(shopIdList []int64, skuCodeList []string) ([]*mysql.SkuInventory, error) {
 	var result = make([]*mysql.SkuInventory, 0)
-	err := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory).
-		Where("amount > 0").
-		In("shop_id", shopIdList).
-		In("sku_code", skuCodeList).
-		Find(&result)
+	session := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventory).
+		Where("amount > 0")
+	if shopIdList != nil && len(shopIdList) > 0 {
+		session = session.In("shop_id", shopIdList)
+	}
+	if skuCodeList != nil && len(skuCodeList) > 0 {
+		session = session.In("sku_code", skuCodeList)
+	}
+	err := session.Find(&result)
 	return result, err
 }
 
