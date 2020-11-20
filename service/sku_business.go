@@ -604,7 +604,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 				skuInventoryRecord := &mysql.SkuInventoryRecord{
 					ShopId:       req.List[i].ShopId,
 					SkuCode:      req.List[i].Detail[j].SkuCode,
-					OpType:       0, // 入库
+					OpType:       3, // 恢复库存
 					OpUid:        req.OperationMeta.OpUid,
 					OpIp:         req.OperationMeta.OpIp,
 					AmountBefore: v,
