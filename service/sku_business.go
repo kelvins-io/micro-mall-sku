@@ -12,6 +12,7 @@ import (
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_sku_proto/sku_business"
 	"gitee.com/cristiane/micro-mall-sku/repository"
 	"gitee.com/kelvins-io/kelvins"
+	"github.com/google/uuid"
 	"strconv"
 	"time"
 )
@@ -168,9 +169,8 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
 			}
 		}()
-
-		return code.Success
-	} else if req.OperationType == sku_business.OperationType_UPDATE {
+		return
+	} else if req.OperationType == sku_business.OperationType_PUT_AWAY {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
@@ -182,7 +182,81 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			return
 		}
 		// 增加库存
-
+		shopIdList := []int64{req.Sku.ShopId}
+		skuCodeList := []string{req.Sku.SkuCode}
+		skuInventoryList, err := repository.GetSkuInventoryList("shop_id,sku_code,amount", shopIdList, skuCodeList)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList %v,err: %v,shopIdList: %v, skuCodeList: %+v", err, shopIdList, skuCodeList)
+			retCode = code.ErrorServer
+			return
+		}
+		if len(skuInventoryList) == 0 {
+			return
+		}
+		tx := kelvins.XORM_DBEngine.NewSession()
+		err = tx.Begin()
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx Begin err: %v", err)
+			retCode = code.ErrorServer
+			return
+		}
+		skuInventoryRecord := mysql.SkuInventoryRecord{
+			ShopId:       req.Sku.ShopId,
+			SkuCode:      req.Sku.SkuCode,
+			OpType:       0, // 入库
+			OpUid:        req.OperationMeta.OpUid,
+			OpIp:         req.OperationMeta.OpIp,
+			AmountBefore: skuInventoryList[0].Amount,
+			Amount:       req.Sku.Amount,
+			OpTxId:       uuid.New().String(),
+			State:        0,
+			Verify:       1,
+			CreateTime:   time.Now(),
+			UpdateTime:   time.Now(),
+		}
+		err = repository.CreateSkuInventoryRecordByTx(tx, &skuInventoryRecord)
+		if err != nil {
+			errCallback := tx.Rollback()
+			if errCallback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx Rollback err: %v", errCallback)
+			}
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx  err: %v, record: %+v", err, skuInventoryRecord)
+			retCode = code.ErrorServer
+			return
+		}
+		updateSkuInventoryWhere := map[string]interface{}{
+			"shop_id":  req.Sku.ShopId,
+			"sku_code": req.Sku.SkuCode,
+			"amount":   skuInventoryList[0].Amount,
+		}
+		updateSkuInventoryMaps := map[string]interface{}{
+			"amount":      skuInventoryList[0].Amount + req.Sku.Amount,
+			"update_time": time.Now(),
+		}
+		rowAffected, err := repository.UpdateInventory(tx, updateSkuInventoryWhere, updateSkuInventoryMaps)
+		if err != nil {
+			errCallback := tx.Rollback()
+			if errCallback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "UpdateInventory Rollback err: %v", errCallback)
+			}
+			kelvins.ErrLogger.Errorf(ctx, "UpdateInventory  err: %v, where: %+v, maps: %+v", err, updateSkuInventoryWhere, updateSkuInventoryMaps)
+			retCode = code.ErrorServer
+			return
+		}
+		if rowAffected != 1 {
+			errCallback := tx.Rollback()
+			if errCallback != nil {
+				kelvins.ErrLogger.Errorf(ctx, "UpdateInventory rowAffected  Rollback err: %v", errCallback)
+			}
+			retCode = code.TransactionFailed
+			return
+		}
+		err = tx.Commit()
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "UpdateInventory Commit err: %v", err)
+			retCode = code.ErrorServer
+			return
+		}
 	}
 
 	return

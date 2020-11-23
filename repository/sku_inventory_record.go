@@ -11,6 +11,11 @@ func CreateSkuInventoryRecordByTx(tx *xorm.Session, model *mysql.SkuInventoryRec
 	return
 }
 
+func CreateSkuInventoryRecord(model *mysql.SkuInventoryRecord) (err error) {
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableSkuInventoryRecord).Insert(model)
+	return
+}
+
 func FindSkuInventoryRecord(sqlSelect string, where interface{}) ([]mysql.SkuInventoryRecord, error) {
 	var result = make([]mysql.SkuInventoryRecord, 0)
 	err := kelvins.XORM_DBEngine.Table(mysql.TableSkuInventoryRecord).Select(sqlSelect).Where(where).Find(&result)

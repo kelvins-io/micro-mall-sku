@@ -8,6 +8,7 @@ require (
 	gitee.com/kelvins-io/kelvins v1.1.2
 	github.com/golang/protobuf v1.4.2
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/grpc-gateway v1.14.7
 	github.com/qiniu/qmgo v0.7.0
 	github.com/satori/go.uuid v1.2.0
