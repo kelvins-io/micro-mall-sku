@@ -171,26 +171,14 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		}()
 		return
 	} else if req.OperationType == sku_business.OperationType_PUT_AWAY {
-		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
+		record, err := repository.GetSkuInventory("id,amount", req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
 			retCode = code.ErrorServer
 			return
 		}
-		if !exist {
+		if record.Id <= 0 {
 			retCode = code.SkuCodeNotExist
-			return
-		}
-		// 增加库存
-		shopIdList := []int64{req.Sku.ShopId}
-		skuCodeList := []string{req.Sku.SkuCode}
-		skuInventoryList, err := repository.GetSkuInventoryList("shop_id,sku_code,amount", shopIdList, skuCodeList)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList %v,err: %v,shopIdList: %v, skuCodeList: %+v", err, shopIdList, skuCodeList)
-			retCode = code.ErrorServer
-			return
-		}
-		if len(skuInventoryList) == 0 {
 			return
 		}
 		tx := kelvins.XORM_DBEngine.NewSession()
@@ -206,7 +194,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			OpType:       0, // 入库
 			OpUid:        req.OperationMeta.OpUid,
 			OpIp:         req.OperationMeta.OpIp,
-			AmountBefore: skuInventoryList[0].Amount,
+			AmountBefore: record.Amount,
 			Amount:       req.Sku.Amount,
 			OpTxId:       uuid.New().String(),
 			State:        0,
@@ -227,10 +215,10 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		updateSkuInventoryWhere := map[string]interface{}{
 			"shop_id":  req.Sku.ShopId,
 			"sku_code": req.Sku.SkuCode,
-			"amount":   skuInventoryList[0].Amount,
+			"amount":   record.Amount,
 		}
 		updateSkuInventoryMaps := map[string]interface{}{
-			"amount":      skuInventoryList[0].Amount + req.Sku.Amount,
+			"amount":      record.Amount + req.Sku.Amount,
 			"update_time": time.Now(),
 		}
 		rowAffected, err := repository.UpdateInventory(tx, updateSkuInventoryWhere, updateSkuInventoryMaps)

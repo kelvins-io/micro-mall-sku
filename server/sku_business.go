@@ -24,15 +24,28 @@ func (s *SkuBusinessServer) PutAwaySku(ctx context.Context, req *sku_business.Pu
 		result.Common.Msg = errcode.GetErrMsg(code.SkuCodeNotExist)
 		return &result, nil
 	}
+	if req.Sku.ShopId <= 0 {
+		result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
+		result.Common.Msg = errcode.GetErrMsg(code.ShopBusinessNotExist)
+		return &result, nil
+	}
+	if req.Sku.Amount <= 0 {
+		result.Common.Code = sku_business.RetCode_SKU_AMOUNT_NOT_ENOUGH
+		result.Common.Msg = errcode.GetErrMsg(code.SkuAmountNotEnough)
+		return &result, nil
+	}
 	retCode := service.PutAwaySku(ctx, req)
 	if retCode != code.Success {
-		if retCode == code.SkuCodeExist {
+		switch retCode {
+		case code.SkuCodeExist:
 			result.Common.Code = sku_business.RetCode_SKU_EXIST
-		} else if retCode == code.ShopBusinessNotExist {
+		case code.ShopBusinessNotExist:
 			result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
-		} else if retCode == code.TransactionFailed {
+		case code.TransactionFailed:
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
-		} else {
+		case code.SkuCodeNotExist:
+			result.Common.Code = sku_business.RetCode_SKU_NOT_EXIST
+		default:
 			result.Common.Code = sku_business.RetCode_ERROR
 		}
 		result.Common.Msg = errcode.GetErrMsg(retCode)
