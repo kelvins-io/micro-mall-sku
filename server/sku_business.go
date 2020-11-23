@@ -105,8 +105,7 @@ func (s *SkuBusinessServer) DeductInventory(ctx context.Context, req *sku_busine
 func (s *SkuBusinessServer) RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryRequest) (*sku_business.RestoreInventoryResponse, error) {
 	var result = sku_business.RestoreInventoryResponse{
 		Common: &sku_business.CommonResponse{
-			Code: sku_business.RetCode_ERROR,
-			Msg:  "",
+			Code: sku_business.RetCode_SUCCESS,
 		},
 		IsSuccess: false,
 	}

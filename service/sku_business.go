@@ -99,6 +99,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			Amount:       req.Sku.Amount,
 			OpTxId:       fmt.Sprintf("%d-%s", req.Sku.ShopId, req.Sku.SkuCode),
 			State:        0,
+			Verify:       1,
 			CreateTime:   time.Now(),
 			UpdateTime:   time.Now(),
 		}
@@ -160,7 +161,6 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
-
 		// 增加扩展属性
 		go func() {
 			err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
@@ -168,6 +168,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
 			}
 		}()
+
 		return code.Success
 	} else if req.OperationType == sku_business.OperationType_UPDATE {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
@@ -190,7 +191,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (result []*sku_business.SkuInventoryInfo, retCode int) {
 	retCode = code.Success
 	result = make([]*sku_business.SkuInventoryInfo, 0)
-	skuInventoryList, err := repository.GetSkuInventoryListByShopId(shopId, pageSize, pageNum)
+	skuInventoryList, err := repository.GetSkuInventoryListByShopId(sqlSelectSkuInventory, shopId, pageSize, pageNum)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryListByShopId err: %v, ShopId: %+v", err, shopId)
 		retCode = code.ErrorServer
@@ -235,6 +236,8 @@ func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (resul
 	return
 }
 
+const sqlSelectSkuInventory = "shop_id,sku_code,amount,version"
+
 func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventoryRequest) ([]*sku_business.SearchSkuInventoryEntry, int) {
 	result := make([]*sku_business.SearchSkuInventoryEntry, 0)
 	serverName := args.RpcServiceMicroMallSearch
@@ -273,7 +276,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 		}
 		skuCodes[i] = rsp.List[i].SkuCode
 	}
-	skuInventoryList, err := repository.GetSkuInventoryList(shopIds, skuCodes)
+	skuInventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, shopIds, skuCodes)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList  err: %v, shopIds: %+v,skuCodes: %+v", err, shopIds, skuCodes)
 		return result, code.ErrorServer
@@ -281,9 +284,9 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	if len(skuInventoryList) == 0 {
 		return result, code.Success
 	}
-	skuCodeToSkuInventory := make(map[string]*mysql.SkuInventory)
+	skuCodeToSkuInventory := make(map[string]mysql.SkuInventory)
 	for i := 0; i < len(skuInventoryList); i++ {
-		skuCodeToSkuInventory[skuInventoryList[i].SkuCode] = skuInventoryList[i]
+		skuCodeToSkuInventory[skuInventoryList[i].SkuCode] = *skuInventoryList[i]
 	}
 	skuPropertyList, err := repository.GetSkuPropertyList(skuCodes)
 	if err != nil {
@@ -397,8 +400,10 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	// 汇总商品
 	allShopIdList := make([]int64, len(req.List))
 	allSkuCodeList := make([]string, 0)
+	allOutTradeList := make([]string, len(req.List))
 	for i := 0; i < len(req.List); i++ {
 		allShopIdList[i] = req.List[i].ShopId
+		allOutTradeList[i] = req.List[i].OutTradeNo
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -408,8 +413,23 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 		}
 		allSkuCodeList = append(allSkuCodeList, skuCodeList...)
 	}
+	// 取出外部订单号
+	checkRecordWhere := map[string]interface{}{
+		"op_tx_id": allOutTradeList,
+	}
+	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, checkRecordWhere)
+		retCode = code.ErrorServer
+		return
+	}
+	// 判断当前订单号是否已有库存记录--防止重复扣减
+	if len(checkRecordList) > 0 {
+		retCode = code.DeductInventoryRecordExist
+		return
+	}
 	// 从DB里面取出这些商品
-	inventoryList, err := repository.GetSkuInventoryList(allShopIdList, allSkuCodeList)
+	inventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, allShopIdList, allSkuCodeList)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, allShopIdList, allSkuCodeList)
 		retCode = code.ErrorServer
@@ -481,13 +501,14 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 				skuInventoryRecord := &mysql.SkuInventoryRecord{
 					ShopId:       req.List[i].ShopId,
 					SkuCode:      req.List[i].Detail[j].SkuCode,
-					OpType:       1,
+					OpType:       1, // 出库
 					OpUid:        req.OperationMeta.OpUid,
 					OpIp:         req.OperationMeta.OpIp,
 					AmountBefore: v,
 					Amount:       req.List[i].Detail[j].Amount,
 					OpTxId:       req.List[i].OutTradeNo,
 					State:        0,
+					Verify:       0,
 					CreateTime:   time.Now(),
 					UpdateTime:   time.Now(),
 				}
@@ -528,7 +549,9 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					}
 					retCode = code.TransactionFailed
 					inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
+					return
 				}
+				allShopIdSkuCodeAmount[amountKey] -= req.List[i].Detail[j].Amount
 			}
 		}
 		if len(inventoryState) > 0 {
@@ -557,8 +580,10 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	// 汇总商品
 	allShopIdList := make([]int64, len(req.List))
 	allSkuCodeList := make([]string, 0)
+	allOutTradeList := make([]string, len(req.List))
 	for i := 0; i < len(req.List); i++ {
 		allShopIdList[i] = req.List[i].ShopId
+		allOutTradeList[i] = req.List[i].OutTradeNo
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -568,21 +593,35 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 		}
 		allSkuCodeList = append(allSkuCodeList, skuCodeList...)
 	}
+	// 取出外部订单号
+	checkRecordWhere := map[string]interface{}{
+		"op_tx_id": allOutTradeList,
+		"op_type":  3, // 恢复
+		"verify":   1, // 未核实的才能恢复
+	}
+	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, checkRecordWhere)
+		retCode = code.ErrorServer
+		return
+	}
+	// 当前订单号是否已经恢复过库存
+	if len(checkRecordList) != 0 {
+		return
+	}
 	// 从DB里面取出这些商品
-	inventoryList, err := repository.GetSkuInventoryList(allShopIdList, allSkuCodeList)
+	inventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, allShopIdList, allSkuCodeList)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, allShopIdList, allSkuCodeList)
 		retCode = code.ErrorServer
 		return
 	}
-
 	// 收集数据库中商品剩余数量
 	allShopIdSkuCodeAmount := make(map[string]int64)
 	for i := 0; i < len(inventoryList); i++ {
 		key := fmt.Sprintf("%d-%s", inventoryList[i].ShopId, inventoryList[i].SkuCode)
 		allShopIdSkuCodeAmount[key] = inventoryList[i].Amount // 如果shop_id + sku_code 是union key可以直接赋值
 	}
-
 	// 开始扣减库存
 	tx := kelvins.XORM_DBEngine.NewSession()
 	err = tx.Begin()
@@ -600,7 +639,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 			amountKey := fmt.Sprintf("%d-%s", req.List[i].ShopId, req.List[i].Detail[j].SkuCode)
 			v, ok := allShopIdSkuCodeAmount[amountKey]
 			if ok {
-				// 记录库存扣减
+				// 记录恢复记录
 				skuInventoryRecord := &mysql.SkuInventoryRecord{
 					ShopId:       req.List[i].ShopId,
 					SkuCode:      req.List[i].Detail[j].SkuCode,
@@ -611,6 +650,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					Amount:       req.List[i].Detail[j].Amount,
 					OpTxId:       req.List[i].OutTradeNo,
 					State:        0,
+					Verify:       1,
 					CreateTime:   time.Now(),
 					UpdateTime:   time.Now(),
 				}
@@ -624,6 +664,34 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					retCode = code.ErrorServer
 					return
 				}
+				// 更新扣减记录
+				updateRecordWhere := map[string]interface{}{
+					"op_tx_id": req.List[i].OutTradeNo,
+					"op_type":  1, // 出库
+					"verify":   0, // 未核实的才能恢复
+				}
+				updateRecordMaps := map[string]interface{}{
+					"verify":      1, // 已核实
+					"update_time": time.Now(),
+				}
+				rows, err := repository.UpdateSkuInventoryRecordByTx(tx, updateRecordWhere, updateRecordMaps)
+				if err != nil {
+					errRollback := tx.Rollback()
+					if errRollback != nil {
+						kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx Rollback err: %v", errRollback)
+					}
+					kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx err: %v, where: %v, maps: %v", err, updateRecordWhere, updateRecordMaps)
+					retCode = code.ErrorServer
+					return
+				}
+				//if rows <= 0 {
+				//	errRollback := tx.Rollback()
+				//	if errRollback != nil {
+				//		kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx Rollback err: %v", errRollback)
+				//	}
+				//	retCode = code.TransactionFailed
+				//	return
+				//}
 				// 使用乐观锁扣减库存
 				where := map[string]interface{}{
 					"shop_id":  req.List[i].ShopId,
@@ -634,7 +702,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					"amount":      v + req.List[i].Detail[j].Amount,
 					"update_time": time.Now(),
 				}
-				rows, err := repository.UpdateInventory(tx, where, maps)
+				rows, err = repository.UpdateInventory(tx, where, maps)
 				if err != nil {
 					errRollback := tx.Rollback()
 					if errRollback != nil {
@@ -644,13 +712,15 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					retCode = code.ErrorServer
 					return
 				}
-				if rows <= 0 {
+				if rows != 1 {
 					errRollback := tx.Rollback()
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "RestoreInventory Rollback err: %v", errRollback)
 					}
 					retCode = code.TransactionFailed
+					return
 				}
+				allShopIdSkuCodeAmount[amountKey] += req.List[i].Detail[j].Amount
 			}
 		}
 	}
