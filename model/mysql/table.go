@@ -42,11 +42,12 @@ type SkuPriceHistory struct {
 
 type SkuInventory struct {
 	Id         int64     `xorm:"pk autoincr comment('商品库存ID') BIGINT"`
-	SkuCode    string    `xorm:"not null comment('商品编码') unique unique(sku_code_shop_id_index) CHAR(64)"`
+	SkuCode    string    `xorm:"not null comment('商品编码') unique CHAR(64)"`
 	Amount     int64     `xorm:"comment('库存数量') BIGINT"`
 	Price      string    `xorm:"comment('入库单价') DECIMAL(32,16)"`
-	ShopId     int64     `xorm:"not null comment('所属店铺ID') index unique(sku_code_shop_id_index) BIGINT"`
+	ShopId     int64     `xorm:"not null comment('所属店铺ID') index BIGINT"`
 	Version    int       `xorm:"not null default 1 comment('商品版本') INT"`
+	LastTxId   string    `xorm:"not null default 'dd13b4aa-4121-4898-a2b5-bcfebccb713b' comment('最后一次更新事务ID') index CHAR(60)"`
 	CreateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
 	UpdateTime time.Time `xorm:"not null default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
 }

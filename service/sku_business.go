@@ -61,6 +61,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+		opTxId := uuid.New().String()
 		// 存储商品属性-基本属性
 		skuProperty := mysql.SkuProperty{
 			Code:          req.Sku.SkuCode,
@@ -98,7 +99,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			OpIp:         req.OperationMeta.OpIp,
 			AmountBefore: 0,
 			Amount:       req.Sku.Amount,
-			OpTxId:       fmt.Sprintf("%d-%s", req.Sku.ShopId, req.Sku.SkuCode),
+			OpTxId:       opTxId,
 			State:        0,
 			Verify:       1,
 			CreateTime:   time.Now(),
@@ -142,6 +143,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			Amount:     req.Sku.Amount,
 			Price:      req.Sku.Price,
 			ShopId:     req.Sku.ShopId,
+			LastTxId:   opTxId,
 			Version:    1, // 入库版本为1
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
@@ -171,7 +173,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		}()
 		return
 	} else if req.OperationType == sku_business.OperationType_PUT_AWAY {
-		record, err := repository.GetSkuInventory("id,amount", req.Sku.ShopId, req.Sku.SkuCode)
+		record, err := repository.GetSkuInventory("id,amount,last_tx_id", req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
 			retCode = code.ErrorServer
@@ -188,6 +190,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			retCode = code.ErrorServer
 			return
 		}
+		opTxId := uuid.New().String()
 		skuInventoryRecord := mysql.SkuInventoryRecord{
 			ShopId:       req.Sku.ShopId,
 			SkuCode:      req.Sku.SkuCode,
@@ -196,7 +199,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			OpIp:         req.OperationMeta.OpIp,
 			AmountBefore: record.Amount,
 			Amount:       req.Sku.Amount,
-			OpTxId:       uuid.New().String(),
+			OpTxId:       opTxId,
 			State:        0,
 			Verify:       1,
 			CreateTime:   time.Now(),
@@ -213,12 +216,14 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			return
 		}
 		updateSkuInventoryWhere := map[string]interface{}{
-			"shop_id":  req.Sku.ShopId,
-			"sku_code": req.Sku.SkuCode,
-			"amount":   record.Amount,
+			"shop_id":    req.Sku.ShopId,
+			"sku_code":   req.Sku.SkuCode,
+			"amount":     record.Amount,
+			"last_tx_id": record.LastTxId,
 		}
 		updateSkuInventoryMaps := map[string]interface{}{
 			"amount":      record.Amount + req.Sku.Amount,
+			"last_tx_id":  opTxId,
 			"update_time": time.Now(),
 		}
 		rowAffected, err := repository.UpdateInventory(tx, updateSkuInventoryWhere, updateSkuInventoryMaps)
@@ -298,7 +303,7 @@ func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (resul
 	return
 }
 
-const sqlSelectSkuInventory = "shop_id,sku_code,amount,version"
+const sqlSelectSkuInventory = "shop_id,sku_code,amount,version,last_tx_id"
 
 func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventoryRequest) ([]*sku_business.SearchSkuInventoryEntry, int) {
 	result := make([]*sku_business.SearchSkuInventoryEntry, 0)
@@ -500,9 +505,11 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 
 	// 收集数据库中商品剩余数量
 	allShopIdSkuCodeAmount := make(map[string]int64)
+	allShopIdSkuCodeLastTxId := make(map[string]string)
 	for i := 0; i < len(inventoryList); i++ {
 		key := fmt.Sprintf("%d-%s", inventoryList[i].ShopId, inventoryList[i].SkuCode)
 		allShopIdSkuCodeAmount[key] = inventoryList[i].Amount // 如果shop_id + sku_code 是union key可以直接赋值
+		allShopIdSkuCodeLastTxId[key] = inventoryList[i].LastTxId
 	}
 
 	// 统计哪些商品不够数量
@@ -556,7 +563,9 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 		}
 		inventoryState = make(map[int64][]string)
 		for j := 0; j < len(req.List[i].Detail); j++ {
+			opTxId := uuid.New().String()
 			amountKey := fmt.Sprintf("%d-%s", req.List[i].ShopId, req.List[i].Detail[j].SkuCode)
+			lastTxIdKey := amountKey
 			v, ok := allShopIdSkuCodeAmount[amountKey]
 			if ok {
 				// 记录库存扣减
@@ -568,7 +577,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					OpIp:         req.OperationMeta.OpIp,
 					AmountBefore: v,
 					Amount:       req.List[i].Detail[j].Amount,
-					OpTxId:       req.List[i].OutTradeNo,
+					OpTxId:       opTxId,
 					State:        0,
 					Verify:       0,
 					CreateTime:   time.Now(),
@@ -586,12 +595,14 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 				}
 				// 使用乐观锁扣减库存
 				where := map[string]interface{}{
-					"shop_id":  req.List[i].ShopId,
-					"sku_code": req.List[i].Detail[j].SkuCode,
-					"amount":   v,
+					"shop_id":    req.List[i].ShopId,
+					"sku_code":   req.List[i].Detail[j].SkuCode,
+					"amount":     v,
+					"last_tx_id": allShopIdSkuCodeLastTxId[lastTxIdKey],
 				}
 				maps := map[string]interface{}{
 					"amount":      v - req.List[i].Detail[j].Amount,
+					"last_tx_id":  opTxId,
 					"update_time": time.Now(),
 				}
 				rows, err := repository.UpdateInventory(tx, where, maps)
@@ -604,7 +615,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					retCode = code.ErrorServer
 					return
 				}
-				if rows <= 0 {
+				if rows != 1 {
 					errRollback := tx.Rollback()
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "DeductInventory Rollback err: %v", errRollback)
@@ -613,7 +624,9 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					inventoryState[req.List[i].ShopId] = append(inventoryState[req.List[i].ShopId], req.List[i].Detail[j].SkuCode)
 					return
 				}
+				// 通过map key直接修改vale是允许的，但是value不是基本类型或非指针类型则不允许
 				allShopIdSkuCodeAmount[amountKey] -= req.List[i].Detail[j].Amount
+				allShopIdSkuCodeLastTxId[lastTxIdKey] = opTxId
 			}
 		}
 		if len(inventoryState) > 0 {
@@ -680,9 +693,11 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	}
 	// 收集数据库中商品剩余数量
 	allShopIdSkuCodeAmount := make(map[string]int64)
+	allShopIdSkuCodeLastTxId := make(map[string]string)
 	for i := 0; i < len(inventoryList); i++ {
 		key := fmt.Sprintf("%d-%s", inventoryList[i].ShopId, inventoryList[i].SkuCode)
 		allShopIdSkuCodeAmount[key] = inventoryList[i].Amount // 如果shop_id + sku_code 是union key可以直接赋值
+		allShopIdSkuCodeLastTxId[key] = inventoryList[i].LastTxId
 	}
 	// 开始扣减库存
 	tx := kelvins.XORM_DBEngine.NewSession()
@@ -698,7 +713,9 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 			continue
 		}
 		for j := 0; j < len(req.List[i].Detail); j++ {
+			opTxId := uuid.New().String()
 			amountKey := fmt.Sprintf("%d-%s", req.List[i].ShopId, req.List[i].Detail[j].SkuCode)
+			lastTxIdKey := amountKey
 			v, ok := allShopIdSkuCodeAmount[amountKey]
 			if ok {
 				// 记录恢复记录
@@ -710,7 +727,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					OpIp:         req.OperationMeta.OpIp,
 					AmountBefore: v,
 					Amount:       req.List[i].Detail[j].Amount,
-					OpTxId:       req.List[i].OutTradeNo,
+					OpTxId:       opTxId,
 					State:        0,
 					Verify:       1,
 					CreateTime:   time.Now(),
@@ -734,6 +751,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 				}
 				updateRecordMaps := map[string]interface{}{
 					"verify":      1, // 已核实
+					"op_tx_id":    opTxId,
 					"update_time": time.Now(),
 				}
 				rows, err := repository.UpdateSkuInventoryRecordByTx(tx, updateRecordWhere, updateRecordMaps)
@@ -756,12 +774,14 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 				//}
 				// 使用乐观锁扣减库存
 				where := map[string]interface{}{
-					"shop_id":  req.List[i].ShopId,
-					"sku_code": req.List[i].Detail[j].SkuCode,
-					"amount":   v,
+					"shop_id":    req.List[i].ShopId,
+					"sku_code":   req.List[i].Detail[j].SkuCode,
+					"amount":     v,
+					"last_tx_id": allShopIdSkuCodeLastTxId[lastTxIdKey],
 				}
 				maps := map[string]interface{}{
 					"amount":      v + req.List[i].Detail[j].Amount,
+					"last_tx_id":  opTxId,
 					"update_time": time.Now(),
 				}
 				rows, err = repository.UpdateInventory(tx, where, maps)
@@ -783,6 +803,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					return
 				}
 				allShopIdSkuCodeAmount[amountKey] += req.List[i].Detail[j].Amount
+				allShopIdSkuCodeLastTxId[lastTxIdKey] = opTxId
 			}
 		}
 	}
