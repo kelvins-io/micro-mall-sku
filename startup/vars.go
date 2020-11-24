@@ -10,12 +10,19 @@ import (
 
 // SetupVars 加载变量
 func SetupVars() error {
+	var err error
 	if vars.QueueAMQPSettingUserRegisterNotice != nil && vars.QueueAMQPSettingUserRegisterNotice.Broker != "" {
-		vars.QueueServerUserRegisterNotice = setup.NewAMQPQueue(vars.QueueAMQPSettingUserRegisterNotice, nil)
+		vars.QueueServerUserRegisterNotice, err = setup.NewAMQPQueue(vars.QueueAMQPSettingUserRegisterNotice, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	if vars.QueueAMQPSettingUserStateNotice != nil && vars.QueueAMQPSettingUserStateNotice.Broker != "" {
-		vars.QueueServerUserStateNotice = setup.NewAMQPQueue(vars.QueueAMQPSettingUserStateNotice, nil)
+		vars.QueueServerUserStateNotice, err = setup.NewAMQPQueue(vars.QueueAMQPSettingUserStateNotice, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	// 初始化mongodb
@@ -49,5 +56,5 @@ func SetupVars() error {
 	db := client.Database(vars.MongoDBSetting.Database)
 
 	vars.MongoDBDatabase = db
-	return nil
+	return err
 }
