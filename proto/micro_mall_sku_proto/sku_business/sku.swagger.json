@@ -11,6 +11,39 @@
     "application/json"
   ],
   "paths": {
+    "/v1/sku/inventory/confirm": {
+      "post": {
+        "summary": "确认库存",
+        "operationId": "SkuBusinessService_ConfirmSkuInventory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sku_businessConfirmSkuInventoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sku_businessConfirmSkuInventoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SkuBusinessService"
+        ]
+      }
+    },
     "/v1/sku/inventory/deduct": {
       "put": {
         "summary": "扣减库存",
@@ -320,6 +353,28 @@
         }
       }
     },
+    "sku_businessConfirmSkuInventoryRequest": {
+      "type": "object",
+      "properties": {
+        "out_trade_no": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "op_meta": {
+          "$ref": "#/definitions/sku_businessOperationMeta"
+        }
+      }
+    },
+    "sku_businessConfirmSkuInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        }
+      }
+    },
     "sku_businessDeductInventoryRequest": {
       "type": "object",
       "properties": {
@@ -522,7 +577,11 @@
         "TRANSACTION_FAILED",
         "SKU_PRICE_VERSION_NOT_EXIST",
         "SKU_PRICE_VERSION_POLICY_TYPE_NOT_SUPPORT",
-        "SKU_PRICE_VERSION_POLICY_DATA_FORMAT_ERR"
+        "SKU_PRICE_VERSION_POLICY_DATA_FORMAT_ERR",
+        "SKU_DEDUCT_INVENTORY_RECORD_EXIST",
+        "SKU_DEDUCT_INVENTORY_RECORD_NOT_EXIST",
+        "SKU_RESTORE_INVENTORY_RECORD_EXIST",
+        "SKU_RESTORE_INVENTORY_RECORD_NOT_EXIST"
       ],
       "default": "SUCCESS"
     },

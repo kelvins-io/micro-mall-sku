@@ -25,3 +25,7 @@ func FindSkuInventoryRecord(sqlSelect string, where interface{}) ([]mysql.SkuInv
 func UpdateSkuInventoryRecordByTx(tx *xorm.Session, where, maps interface{}) (int64, error) {
 	return tx.Table(mysql.TableSkuInventoryRecord).Where(where).Update(maps)
 }
+
+func UpdateSkuInventoryRecord(where, maps interface{}) (int64, error) {
+	return kelvins.XORM_DBEngine.Table(mysql.TableSkuInventoryRecord).Where(where).Update(maps)
+}

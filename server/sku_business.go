@@ -101,7 +101,9 @@ func (s *SkuBusinessServer) DeductInventory(ctx context.Context, req *sku_busine
 	}
 	_, retCode := service.DeductInventory(ctx, req)
 	if retCode != code.Success {
-		if retCode == code.SkuAmountNotEnough {
+		if retCode == code.DeductInventoryRecordExist {
+			result.Common.Code = sku_business.RetCode_SKU_DEDUCT_INVENTORY_RECORD_EXIST
+		} else if retCode == code.SkuAmountNotEnough {
 			result.Common.Code = sku_business.RetCode_SKU_AMOUNT_NOT_ENOUGH
 		} else if retCode == code.TransactionFailed {
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
@@ -124,8 +126,8 @@ func (s *SkuBusinessServer) RestoreInventory(ctx context.Context, req *sku_busin
 	}
 	retCode := service.RestoreInventory(ctx, req)
 	if retCode != code.Success {
-		if retCode == code.SkuAmountNotEnough {
-			result.Common.Code = sku_business.RetCode_SKU_AMOUNT_NOT_ENOUGH
+		if retCode == code.RestoreInventoryRecordExist {
+			result.Common.Code = sku_business.RetCode_SKU_RESTORE_INVENTORY_RECORD_EXIST
 		} else if retCode == code.TransactionFailed {
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
 		} else {
@@ -191,5 +193,24 @@ func (s *SkuBusinessServer) SearchSkuInventory(ctx context.Context, req *sku_bus
 		return result, nil
 	}
 	result.List = list
+	return result, nil
+}
+
+func (s *SkuBusinessServer) ConfirmSkuInventory(ctx context.Context, req *sku_business.ConfirmSkuInventoryRequest) (*sku_business.ConfirmSkuInventoryResponse, error) {
+	result := &sku_business.ConfirmSkuInventoryResponse{Common: &sku_business.CommonResponse{
+		Code: sku_business.RetCode_SUCCESS,
+	}}
+	retCode := service.ConfirmSkuInventory(ctx, req)
+	if retCode != code.Success {
+		switch retCode {
+		case code.TransactionFailed:
+			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
+		case code.DeductInventoryRecordNotExist:
+			result.Common.Code = sku_business.RetCode_SKU_DEDUCT_INVENTORY_RECORD_NOT_EXIST
+		default:
+			result.Common.Code = sku_business.RetCode_ERROR
+		}
+		return result, nil
+	}
 	return result, nil
 }

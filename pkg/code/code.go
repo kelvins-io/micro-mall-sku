@@ -22,6 +22,7 @@ const (
 	SkuPriceVersionPolicyDataFormatErr = 29000019
 	DeductInventoryRecordExist         = 29000020
 	RestoreInventoryRecordExist        = 29000021
+	DeductInventoryRecordNotExist      = 29000022
 )
 
 var ErrMap = make(map[int]string)
@@ -47,6 +48,7 @@ func init() {
 		SkuPriceVersionPolicyDataFormatErr: "商品价格版本策略数据格式不正确",
 		DeductInventoryRecordExist:         "扣减库存记录已存在",
 		RestoreInventoryRecordExist:        "库存恢复记录已存在",
+		DeductInventoryRecordNotExist:      "扣减库存记录不存在",
 	}
 	errcode.RegisterErrMsgDict(dict)
 	for key, _ := range dict {

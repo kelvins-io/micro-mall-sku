@@ -482,7 +482,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	}
 	// 取出外部订单号
 	checkRecordWhere := map[string]interface{}{
-		"op_tx_id": allOutTradeList,
+		"out_trade_no": allOutTradeList,
 	}
 	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
 	if err != nil {
@@ -515,7 +515,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	// 统计哪些商品不够数量
 	inventoryState := make(map[int64][]string)
 	for i := 0; i < len(req.List); i++ {
-		allShopIdList[i] = req.List[i].ShopId
+		//allShopIdList[i] = req.List[i].ShopId
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -557,7 +557,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 		return
 	}
 	for i := 0; i < len(req.List); i++ {
-		allShopIdList[i] = req.List[i].ShopId
+		//allShopIdList[i] = req.List[i].ShopId
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -572,6 +572,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 				skuInventoryRecord := &mysql.SkuInventoryRecord{
 					ShopId:       req.List[i].ShopId,
 					SkuCode:      req.List[i].Detail[j].SkuCode,
+					OutTradeNo:   req.List[i].OutTradeNo,
 					OpType:       1, // 出库
 					OpUid:        req.OperationMeta.OpUid,
 					OpIp:         req.OperationMeta.OpIp,
@@ -653,26 +654,34 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryRequest) (retCode int) {
 	retCode = code.Success
 	// 汇总商品
-	allShopIdList := make([]int64, len(req.List))
+	allShopIdList := make([]int64, 0)
+	allShopIdListSet := map[int64]struct{}{}
 	allSkuCodeList := make([]string, 0)
+	allSkuCodeListSet := map[string]struct{}{}
 	allOutTradeList := make([]string, len(req.List))
 	for i := 0; i < len(req.List); i++ {
-		allShopIdList[i] = req.List[i].ShopId
+		if _, ok := allShopIdListSet[req.List[i].ShopId]; !ok {
+			allShopIdListSet[req.List[i].ShopId] = struct{}{}
+			allShopIdList = append(allShopIdList, req.List[i].ShopId)
+		}
 		allOutTradeList[i] = req.List[i].OutTradeNo
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
-		skuCodeList := make([]string, len(req.List[i].Detail))
+		skuCodeList := make([]string, 0)
 		for j := 0; j < len(req.List[i].Detail); j++ {
-			skuCodeList[j] = req.List[i].Detail[j].SkuCode
+			if _, ok := allSkuCodeListSet[req.List[i].Detail[j].SkuCode]; !ok {
+				skuCodeList = append(skuCodeList, req.List[i].Detail[j].SkuCode)
+				allSkuCodeListSet[req.List[i].Detail[j].SkuCode] = struct{}{}
+			}
 		}
 		allSkuCodeList = append(allSkuCodeList, skuCodeList...)
 	}
 	// 取出外部订单号
 	checkRecordWhere := map[string]interface{}{
-		"op_tx_id": allOutTradeList,
-		"op_type":  3, // 恢复
-		"verify":   1, // 未核实的才能恢复
+		"out_trade_no": allOutTradeList,
+		"op_type":      3, // 恢复
+		"verify":       1, // 未核实的才能恢复
 	}
 	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
 	if err != nil {
@@ -682,6 +691,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	}
 	// 当前订单号是否已经恢复过库存
 	if len(checkRecordList) != 0 {
+		retCode = code.RestoreInventoryRecordExist
 		return
 	}
 	// 从DB里面取出这些商品
@@ -708,7 +718,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 		return
 	}
 	for i := 0; i < len(req.List); i++ {
-		allShopIdList[i] = req.List[i].ShopId
+		//allShopIdList[i] = req.List[i].ShopId
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -722,6 +732,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 				skuInventoryRecord := &mysql.SkuInventoryRecord{
 					ShopId:       req.List[i].ShopId,
 					SkuCode:      req.List[i].Detail[j].SkuCode,
+					OutTradeNo:   req.List[i].OutTradeNo,
 					OpType:       3, // 恢复库存
 					OpUid:        req.OperationMeta.OpUid,
 					OpIp:         req.OperationMeta.OpIp,
@@ -745,9 +756,9 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 				}
 				// 更新扣减记录
 				updateRecordWhere := map[string]interface{}{
-					"op_tx_id": req.List[i].OutTradeNo,
-					"op_type":  1, // 出库
-					"verify":   0, // 未核实的才能恢复
+					"out_trade_no": req.List[i].OutTradeNo,
+					"op_type":      1, // 出库
+					"verify":       0, // 未核实的才能恢复
 				}
 				updateRecordMaps := map[string]interface{}{
 					"verify":      1, // 已核实
@@ -881,4 +892,27 @@ func FiltrateSkuPriceVersion(ctx context.Context, req *sku_business.FiltrateSkuP
 	}
 
 	return result, retCode
+}
+
+func ConfirmSkuInventory(ctx context.Context, req *sku_business.ConfirmSkuInventoryRequest) (retCode int) {
+	retCode = code.Success
+	where := map[string]interface{}{
+		"out_trade_no": req.OutTradeNo,
+		"verify":       0, // 未确认的
+	}
+	opTxId := uuid.New().String()
+	maps := map[string]interface{}{
+		"op_tx_id":    opTxId,
+		"verify":      1, // 确认的
+		"op_ip":       req.OpMeta.OpIp,
+		"op_uid":      req.OpMeta.OpUid,
+		"update_time": time.Now(),
+	}
+	_, err := repository.UpdateSkuInventoryRecord(where, maps)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecord err: %v, where :%+, maps: %+v", err, where, maps)
+		retCode = code.ErrorServer
+		return
+	}
+	return
 }

@@ -18,16 +18,17 @@ type SkuInventory struct {
 
 type SkuInventoryRecord struct {
 	Id           int64     `xorm:"pk autoincr comment('自责ID') BIGINT"`
+	OutTradeNo   string    `xorm:"comment('外部订单号') index CHAR(40)"`
 	ShopId       int64     `xorm:"comment('店铺ID') index BIGINT"`
 	SkuCode      string    `xorm:"comment('商品sku') index CHAR(40)"`
-	OpType       int       `xorm:"default 0 comment('操作类型，0-入库，1-出库，2-冻结') index(op_type_op_tx_index) TINYINT"`
+	OpType       int       `xorm:"default 0 comment('操作类型，0-入库，1-出库，2-冻结') index(verify_op_type_index) TINYINT"`
 	OpUid        int64     `xorm:"comment('操作的用户ID') BIGINT"`
 	OpIp         string    `xorm:"comment('操作IP地址') VARCHAR(255)"`
 	AmountBefore int64     `xorm:"comment('变化之前数量') BIGINT"`
 	Amount       int64     `xorm:"comment('操作数量') BIGINT"`
-	OpTxId       string    `xorm:"comment('操作的事务ID') index index(op_type_op_tx_index) index(verify_op_tx_index) CHAR(60)"`
+	OpTxId       string    `xorm:"comment('操作的事务ID') index CHAR(60)"`
 	State        int       `xorm:"default 0 comment('状态，0-有效，1-锁定中，2-无效') TINYINT"`
-	Verify       int       `xorm:"default 0 comment('是否核实，0-未核实，1-已核实') index(verify_op_tx_index) TINYINT"`
+	Verify       int       `xorm:"default 0 comment('是否核实，0-未核实，1-已核实') index(verify_op_type_index) TINYINT"`
 	CreateTime   time.Time `xorm:"default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
 	UpdateTime   time.Time `xorm:"default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
 }
