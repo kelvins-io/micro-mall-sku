@@ -12,7 +12,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.14.7
 	github.com/qiniu/qmgo v0.7.0
 	github.com/satori/go.uuid v1.2.0
-	go.mongodb.org/mongo-driver v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0

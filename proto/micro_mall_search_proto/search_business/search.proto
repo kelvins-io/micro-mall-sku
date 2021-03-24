@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package search_business;
+
+import "gitee.com/kelvins-io/common/proto/google/api/annotations.proto";
+
+// 搜索服务
+service SearchBusinessService {
+    // 商品库存搜索
+    rpc SkuInventorySearch(SkuInventorySearchRequest)returns(SkuInventorySearchResponse) {
+        option (google.api.http) = {
+            get: "/v1/search/sku/inventory"
+        };
+    }
+    // 店铺搜索
+    rpc ShopSearch(ShopSearchRequest) returns (ShopSearchResponse) {
+        option (google.api.http) = {
+            get: "/v1/search/shop"
+        };
+    }
+
+}
+
+enum RetCode {
+    SUCCESS = 0;
+    ERROR = 500;
+    USER_NOT_EXIST = 50001;
+    USER_EXIST = 50002;
+    MERCHANT_NOT_EXIST = 50003;
+    MERCHANT_EXIST = 50004;
+    SHOP_NOT_EXIST = 50005;
+    SHOP_EXIST = 50006;
+    SKU_NOT_EXIST = 50007;
+    SKU_EXIST = 50008;
+}
+
+message ShopSearchRequest {
+    string shop_key = 1;
+}
+
+message ShopSearchResponse {
+    CommonResponse common = 1;
+    repeated ShopSearchEntry list = 2;
+}
+
+message ShopSearchEntry {
+    string shop_id = 1;
+    string shop_name = 2;
+    double score = 399;
+}
+
+message SkuInventorySearchRequest {
+    string sku_key = 1;
+}
+
+message SkuInventoryEntry {
+    string shop_id = 1;
+    string sku_code = 2;
+    string sku_name = 3;
+    double score  = 399;
+}
+
+message SkuInventorySearchResponse {
+    CommonResponse common = 1;
+    repeated SkuInventoryEntry list = 2;
+}
+
+enum OperationType {
+    CREATE = 0;
+    UPDATE = 1;
+    DELETE = 2;
+    AUDIT = 3;
+    PUT_AWAY = 4;
+}
+message CommonResponse {
+    RetCode code = 1;
+    string msg = 2;
+}

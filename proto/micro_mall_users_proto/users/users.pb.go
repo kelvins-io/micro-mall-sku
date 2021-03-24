@@ -993,7 +993,7 @@ func (c *usersServiceClient) GetUserInfo(ctx context.Context, in *GetUserInfoReq
 	return out, nil
 }
 
-// UsersServiceServer is the server API for UsersService service.
+// UsersServiceServer is the internal API for UsersService service.
 type UsersServiceServer interface {
 	// 获取用户信息
 	GetUserInfo(context.Context, *GetUserInfoRequest) (*GetUserInfoResponse, error)
@@ -1100,7 +1100,7 @@ func (c *merchantsServiceClient) MerchantsAssociateShop(ctx context.Context, in 
 	return out, nil
 }
 
-// MerchantsServiceServer is the server API for MerchantsService service.
+// MerchantsServiceServer is the internal API for MerchantsService service.
 type MerchantsServiceServer interface {
 	// 商户提交资料
 	MerchantsMaterial(context.Context, *MerchantsMaterialRequest) (*MerchantsMaterialResponse, error)
