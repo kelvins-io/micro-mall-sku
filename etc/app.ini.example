@@ -9,7 +9,7 @@ Level = "debug"
 [kelvins-mysql]
 Host = "127.0.0.1:3306"
 UserName = "root"
-Password = "07030501310"
+Password = "ddd"
 DBName = "micro_mall_sku"
 Charset = "utf8mb4"
 PoolNum =  10
@@ -20,44 +20,20 @@ ParseTime = true
 
 [kelvins-redis]
 Host = "127.0.0.1:6379"
-Password = "07030501310"
+Password = "xxx"
 DB = 1
 PoolNum = 10
 
-;[queue-user-register-notice]
-;Broker = "amqp://micro-mall:szJ9aePR@localhost:5672/micro-mall"
-;DefaultQueue = "user_register_notice"
-;ResultBackend = "redis://07030501310@127.0.0.1:6379/8"
-;ResultsExpireIn = 3600
-;Exchange = "user_register_notice"
-;ExchangeType = "fanout"
-;BindingKey = "user_register_notice"
-;PrefetchCount = 5
-;TaskRetryCount = 3
-;TaskRetryTimeout = 3600
-;
-;[queue-user-state-notice]
-;Broker = "amqp://micro-mall:szJ9aePR@localhost:5672/micro-mall"
-;DefaultQueue = "user_state_notice"
-;ResultBackend = "redis://07030501310@127.0.0.1:6379/8"
-;ResultsExpireIn = 3600
-;Exchange = "user_state_notice"
-;ExchangeType = "fanout"
-;BindingKey = "user_state_notice"
-;PrefetchCount = 5
-;TaskRetryCount = 3
-;TaskRetryTimeout = 3600
-
 [email-config]
-User = "1225807604@qq.com"
-Password = "glxggszbnrnigcii"
+User = "ddd@qq.com"
+Password = "dddd"
 Host = "smtp.qq.com"
 Port = "465"
 
 [mongodb-config]
 Uri = "mongodb://localhost:27017"
 Username = "admin"
-Password = "07030501310"
+Password = "ddddd"
 Database = "micro_mall_sku"
 AuthSource = "admin"
 MaxPoolSize = 9
