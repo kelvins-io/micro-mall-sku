@@ -14,3 +14,8 @@ vendor
 logs
 etc/app.ini
 micro-mall-sku
+micro-mall-sku.pid
+micro-mall-sku-darwin-amd64
+micro-mall-sku-linux-amd64
+micro-mall-sku-windows-amd64.exe
+micro-mall-sku-windows-amd64

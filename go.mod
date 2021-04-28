@@ -3,16 +3,20 @@ module gitee.com/cristiane/micro-mall-sku
 go 1.13
 
 require (
-	gitee.com/cristiane/micro-mall-users v0.0.0-20200905175913-5c852df4d247 // indirect
-	gitee.com/kelvins-io/common v1.0.2
-	gitee.com/kelvins-io/kelvins v1.2.2
+	gitee.com/kelvins-io/common v1.0.4
+	gitee.com/kelvins-io/kelvins v1.2.7
+	gitee.com/kelvins-io/service-config v1.0.0 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/grpc-gateway v1.14.7
 	github.com/qiniu/qmgo v0.7.0
 	github.com/satori/go.uuid v1.2.0
-	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0
+	github.com/tidwall/gjson v1.7.5 // indirect
+	go.elastic.co/apm/module/apmgorm v1.11.0 // indirect
+	go.elastic.co/apm/module/apmgrpc v1.11.0 // indirect
+	go.elastic.co/apm/module/apmredigo v1.11.0 // indirect
+	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0 // indirect
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0
 	xorm.io/xorm v1.0.3
