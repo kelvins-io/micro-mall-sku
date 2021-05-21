@@ -355,6 +355,9 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	for i := 0; i < len(skuInventoryList); i++ {
 		skuCodeToSkuInventory[skuInventoryList[i].SkuCode] = *skuInventoryList[i]
 	}
+	if len(skuCodes) == 0 {
+		return result, code.Success
+	}
 	skuPropertyList, err := repository.GetSkuPropertyList(skuCodes)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList  err: %v, skuCodes: %+v", err, skuCodes)
