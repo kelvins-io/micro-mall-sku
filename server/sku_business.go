@@ -78,18 +78,20 @@ func (s *SkuBusinessServer) SupplementSkuProperty(ctx context.Context, req *sku_
 	}
 	retCode := service.SupplementSkuProperty(ctx, req)
 	if retCode != code.Success {
-		if retCode == code.SkuCodeExist {
+		switch retCode {
+		case code.SkuCodeExist:
 			result.Common.Code = sku_business.RetCode_SKU_EXIST
-		} else if retCode == code.ShopBusinessNotExist {
+		case code.ShopBusinessNotExist:
 			result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
-		} else if retCode == code.TransactionFailed {
+		case code.TransactionFailed:
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
-		} else {
+		case code.SkuCodeNotExist:
+			result.Common.Code = sku_business.RetCode_SKU_NOT_EXIST
+		default:
 			result.Common.Code = sku_business.RetCode_ERROR
 		}
-		result.Common.Msg = errcode.GetErrMsg(retCode)
-		return &result, nil
 	}
+	result.Common.Msg = errcode.GetErrMsg(retCode)
 	return &result, nil
 }
 

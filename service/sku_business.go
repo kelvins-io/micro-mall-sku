@@ -14,6 +14,7 @@ import (
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -332,7 +333,10 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	}
 	shopIds := make([]int64, 0)
 	skuCodes := make([]string, len(rsp.List))
-	for i := 0; i < len(rsp.List); i++ {
+	for i := range rsp.List {
+		if rsp.List[i].ShopId == "" {
+			continue
+		}
 		shopId, err := strconv.ParseInt(rsp.List[i].ShopId, 10, 64)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "SearchSkuInventory ParseI shopId err: %v, shopId: %s", err, rsp.List[i].ShopId)
@@ -367,9 +371,12 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	for i := 0; i < len(skuPropertyList); i++ {
 		skuCodeToSkuProperty[skuPropertyList[i].Code] = skuPropertyList[i]
 	}
-	result = make([]*sku_business.SearchSkuInventoryEntry, len(rsp.List))
+	result = make([]*sku_business.SearchSkuInventoryEntry, 0, len(rsp.List))
 	for i := 0; i < len(rsp.List); i++ {
 		row := rsp.List[i]
+		if rsp.List[i].ShopId == "" {
+			continue
+		}
 		shopId, _ := strconv.ParseInt(rsp.List[i].ShopId, 10, 0)
 		entry := &sku_business.SearchSkuInventoryEntry{
 			Info: &sku_business.SkuInventoryInfo{
@@ -393,7 +400,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 			},
 			Score: row.Score,
 		}
-		result[i] = entry
+		result = append(result, entry)
 	}
 	return result, code.Success
 }
@@ -454,9 +461,11 @@ func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuP
 		err := repository.CreateSkuPropertyEx(ctx, &skuExInfo)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuExInfo)
+			if strings.HasPrefix(err.Error(), "multiple write errors") {
+				return code.SkuCodeExist
+			}
 			return code.ErrorServer
 		}
-		return code.Success
 	} else if req.OperationType == sku_business.OperationType_UPDATE {
 
 	}
