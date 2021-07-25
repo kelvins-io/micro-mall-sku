@@ -23,7 +23,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -56,7 +56,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -89,7 +89,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -102,6 +102,16 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "sku_code_list",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -121,7 +131,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -154,7 +164,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -187,7 +197,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -220,7 +230,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -253,7 +263,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -286,7 +296,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -396,8 +406,7 @@
           "$ref": "#/definitions/sku_businessCommonResponse"
         },
         "is_success": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         }
       }
     },
@@ -451,6 +460,9 @@
     "sku_businessGetSkuListResponse": {
       "type": "object",
       "properties": {
+        "common": {
+          "$ref": "#/definitions/sku_businessCommonResponse"
+        },
         "list": {
           "type": "array",
           "items": {
@@ -555,8 +567,7 @@
           "$ref": "#/definitions/sku_businessCommonResponse"
         },
         "is_success": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         }
       }
     },
@@ -565,6 +576,7 @@
       "enum": [
         "SUCCESS",
         "ERROR",
+        "INVALID_PARAMETER",
         "USER_NOT_EXIST",
         "USER_EXIST",
         "MERCHANT_NOT_EXIST",

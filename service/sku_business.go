@@ -8,7 +8,6 @@ import (
 	"gitee.com/cristiane/micro-mall-sku/pkg/code"
 	"gitee.com/cristiane/micro-mall-sku/pkg/util"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_search_proto/search_business"
-	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_sku_proto/sku_business"
 	"gitee.com/cristiane/micro-mall-sku/repository"
 	"gitee.com/kelvins-io/kelvins"
@@ -20,30 +19,6 @@ import (
 
 func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCode int) {
 	retCode = code.Success
-	if req.Sku.ShopId > 0 {
-		serverName := args.RpcServiceMicroMallShop
-		conn, err := util.GetGrpcClient(serverName)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-			retCode = code.ErrorServer
-			return
-		}
-		defer conn.Close()
-		client := shop_business.NewShopBusinessServiceClient(conn)
-		r := shop_business.GetShopMaterialRequest{
-			ShopId: req.Sku.ShopId,
-		}
-		rsp, err := client.GetShopMaterial(ctx, &r)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetShopMaterial %v,err: %v, req: %+v", serverName, err, r)
-			retCode = code.ErrorServer
-			return
-		}
-		if rsp == nil || rsp.Material == nil || rsp.Material.ShopId <= 0 {
-			retCode = code.ShopBusinessNotExist
-			return
-		}
-	}
 	if req.OperationType == sku_business.OperationType_CREATE {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
@@ -406,7 +381,62 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 }
 
 func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (result []*sku_business.SkuInventoryInfo, retCode int) {
-	return getSkuList(ctx, req.ShopId, 0, 0)
+	retCode = code.Success
+	result = make([]*sku_business.SkuInventoryInfo, 0)
+
+	shopIdList := make([]int64, 0)
+	if req.GetShopId() > 0 {
+		shopIdList = append(shopIdList, req.GetShopId())
+	}
+	skuInventoryList, err := repository.GetSkuInventoryList("*", shopIdList, req.GetSkuCodeList())
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v,ShopId: %v, SkuCode: %+v", err, req.GetShopId(), req.GetSkuCodeList())
+		retCode = code.ErrorServer
+		return
+	}
+	if len(skuInventoryList) == 0 {
+		return
+	}
+	skuCodeToShop := make(map[string]mysql.SkuInventory, len(skuInventoryList))
+	skuCodeList := make([]string, 0, len(skuInventoryList))
+	for _, v := range skuInventoryList {
+		skuCodeToShop[v.SkuCode] = *v
+		skuCodeList = append(skuCodeList, v.SkuCode)
+	}
+	skuCodePropertyList, err := repository.GetSkuPropertyList(skuCodeList)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, SkuCode: %+v", err, skuCodeList)
+		retCode = code.ErrorServer
+		return
+	}
+	if len(skuCodePropertyList) == 0 {
+		return
+	}
+
+	result = make([]*sku_business.SkuInventoryInfo, len(skuCodePropertyList))
+	for i := 0; i < len(skuCodePropertyList); i++ {
+		skuInventoryInfo := &sku_business.SkuInventoryInfo{
+			SkuCode:       skuCodePropertyList[i].Code,
+			Name:          skuCodePropertyList[i].Name,
+			Price:         skuCodePropertyList[i].Price,
+			Title:         skuCodePropertyList[i].Title,
+			SubTitle:      skuCodePropertyList[i].SubTitle,
+			Desc:          skuCodePropertyList[i].Desc,
+			Production:    skuCodePropertyList[i].Production,
+			Supplier:      skuCodePropertyList[i].Supplier,
+			Category:      int32(skuCodePropertyList[i].Category),
+			Color:         skuCodePropertyList[i].Color,
+			ColorCode:     int32(skuCodePropertyList[i].ColorCode),
+			Specification: skuCodePropertyList[i].Specification,
+			DescLink:      skuCodePropertyList[i].DescLink,
+			State:         int32(skuCodePropertyList[i].State),
+			Amount:        skuCodeToShop[skuCodePropertyList[i].Code].Amount,
+			ShopId:        skuCodeToShop[skuCodePropertyList[i].Code].ShopId,
+			Version:       int64(skuCodeToShop[skuCodePropertyList[i].Code].Version),
+		}
+		result[i] = skuInventoryInfo
+	}
+	return
 }
 
 func SyncSkuInventory(ctx context.Context, req *sku_business.SearchSyncSkuInventoryRequest) (result []*sku_business.SkuInventoryInfo, retCode int) {
@@ -414,27 +444,6 @@ func SyncSkuInventory(ctx context.Context, req *sku_business.SearchSyncSkuInvent
 }
 
 func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuPropertyRequest) int {
-	if req.ShopId > 0 {
-		serverName := args.RpcServiceMicroMallShop
-		conn, err := util.GetGrpcClient(serverName)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-			return code.ErrorServer
-		}
-		defer conn.Close()
-		client := shop_business.NewShopBusinessServiceClient(conn)
-		r := shop_business.GetShopMaterialRequest{
-			ShopId: req.ShopId,
-		}
-		rsp, err := client.GetShopMaterial(ctx, &r)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetShopMaterial %v,err: %v, req: %+v", serverName, err, r)
-			return code.ErrorServer
-		}
-		if rsp == nil || rsp.Material == nil || rsp.Material.ShopId <= 0 {
-			return code.ShopBusinessNotExist
-		}
-	}
 	// 检查商品是否存在
 	exist, err := repository.CheckSkuInventoryExist(req.ShopId, req.SkuCode)
 	if err != nil {

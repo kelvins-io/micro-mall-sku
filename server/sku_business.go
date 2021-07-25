@@ -24,11 +24,6 @@ func (s *SkuBusinessServer) PutAwaySku(ctx context.Context, req *sku_business.Pu
 		result.Common.Msg = errcode.GetErrMsg(code.SkuCodeNotExist)
 		return &result, nil
 	}
-	if req.Sku.ShopId <= 0 {
-		result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
-		result.Common.Msg = errcode.GetErrMsg(code.ShopBusinessNotExist)
-		return &result, nil
-	}
 	if req.Sku.Amount <= 0 {
 		result.Common.Code = sku_business.RetCode_SKU_AMOUNT_NOT_ENOUGH
 		result.Common.Msg = errcode.GetErrMsg(code.SkuAmountNotEnough)
@@ -39,8 +34,6 @@ func (s *SkuBusinessServer) PutAwaySku(ctx context.Context, req *sku_business.Pu
 		switch retCode {
 		case code.SkuCodeExist:
 			result.Common.Code = sku_business.RetCode_SKU_EXIST
-		case code.ShopBusinessNotExist:
-			result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
 		case code.TransactionFailed:
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
 		case code.SkuCodeNotExist:
@@ -48,18 +41,26 @@ func (s *SkuBusinessServer) PutAwaySku(ctx context.Context, req *sku_business.Pu
 		default:
 			result.Common.Code = sku_business.RetCode_ERROR
 		}
-		result.Common.Msg = errcode.GetErrMsg(retCode)
-		return &result, nil
 	}
 	return &result, nil
 }
 
 func (s *SkuBusinessServer) GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (*sku_business.GetSkuListResponse, error) {
-	var result sku_business.GetSkuListResponse
+	var result = sku_business.GetSkuListResponse{
+		Common: &sku_business.CommonResponse{
+			Code: sku_business.RetCode_SUCCESS,
+		},
+	}
 	result.List = make([]*sku_business.SkuInventoryInfo, 0)
+	if req.ShopId <= 0 && len(req.SkuCodeList) == 0 {
+		result.Common.Code = sku_business.RetCode_INVALID_PARAMETER
+		return &result, nil
+	}
+
 	list, retCode := service.GetSkuList(ctx, req)
 	if retCode != code.Success {
-		return &result, errcode.TogRPCError(retCode)
+		result.Common.Code = sku_business.RetCode_ERROR
+		return &result, nil
 	}
 	result.List = list
 	return &result, nil
@@ -69,7 +70,6 @@ func (s *SkuBusinessServer) SupplementSkuProperty(ctx context.Context, req *sku_
 	var result sku_business.SupplementSkuPropertyResponse
 	result.Common = &sku_business.CommonResponse{
 		Code: sku_business.RetCode_SUCCESS,
-		Msg:  "",
 	}
 	if req.SkuCode == "" {
 		result.Common.Code = sku_business.RetCode_SKU_NOT_EXIST
@@ -81,8 +81,6 @@ func (s *SkuBusinessServer) SupplementSkuProperty(ctx context.Context, req *sku_
 		switch retCode {
 		case code.SkuCodeExist:
 			result.Common.Code = sku_business.RetCode_SKU_EXIST
-		case code.ShopBusinessNotExist:
-			result.Common.Code = sku_business.RetCode_SHOP_NOT_EXIST
 		case code.TransactionFailed:
 			result.Common.Code = sku_business.RetCode_TRANSACTION_FAILED
 		case code.SkuCodeNotExist:
