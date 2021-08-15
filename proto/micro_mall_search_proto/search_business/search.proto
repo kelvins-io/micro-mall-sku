@@ -3,19 +3,34 @@ syntax = "proto3";
 package search_business;
 
 import "gitee.com/kelvins-io/common/proto/google/api/annotations.proto";
+option go_package = "proto/micro_mall_search_proto/search_business;search_business";
 
 // 搜索服务
 service SearchBusinessService {
     // 商品库存搜索
     rpc SkuInventorySearch(SkuInventorySearchRequest)returns(SkuInventorySearchResponse) {
         option (google.api.http) = {
-            get: "/v1/search/sku/inventory"
+            get: "/v1/search/sku_inventory"
         };
     }
     // 店铺搜索
     rpc ShopSearch(ShopSearchRequest) returns (ShopSearchResponse) {
         option (google.api.http) = {
             get: "/v1/search/shop"
+        };
+    }
+    // 商品库存同步
+    rpc SyncSkuInventory(SyncSkuInventoryRequest)returns(SyncSkuInventoryResponse) {
+        option (google.api.http) = {
+            post: "/v1/search/sync/sku_inventory"
+            body:"*"
+        };
+    }
+    // 店铺同步
+    rpc SyncShop(SyncShopRequest)returns(SyncShopResponse) {
+        option (google.api.http) = {
+            post: "/v1/search/sync/shop"
+            body:"*"
         };
     }
 
@@ -32,6 +47,22 @@ enum RetCode {
     SHOP_EXIST = 50006;
     SKU_NOT_EXIST = 50007;
     SKU_EXIST = 50008;
+}
+
+message SyncShopRequest {
+
+}
+
+message SyncShopResponse {
+
+}
+
+message SyncSkuInventoryRequest {
+
+}
+
+message SyncSkuInventoryResponse {
+
 }
 
 message ShopSearchRequest {
