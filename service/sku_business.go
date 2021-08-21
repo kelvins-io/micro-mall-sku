@@ -289,7 +289,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return result, code.ErrorServer
 	}
-	defer conn.Close()
+	//defer conn.Close()
 	client := search_business.NewSearchBusinessServiceClient(conn)
 	r := search_business.SkuInventorySearchRequest{
 		SkuKey: req.Keyword,
