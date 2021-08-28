@@ -54,7 +54,7 @@ message SyncShopRequest {
 }
 
 message SyncShopResponse {
-
+    CommonResponse common = 1;
 }
 
 message SyncSkuInventoryRequest {
@@ -62,7 +62,7 @@ message SyncSkuInventoryRequest {
 }
 
 message SyncSkuInventoryResponse {
-
+    CommonResponse common = 1;
 }
 
 message ShopSearchRequest {

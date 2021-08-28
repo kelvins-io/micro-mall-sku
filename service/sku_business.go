@@ -10,6 +10,7 @@ import (
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_sku_proto/sku_business"
 	"gitee.com/cristiane/micro-mall-sku/repository"
+	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
 	"strconv"
@@ -22,7 +23,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 	if req.OperationType == sku_business.OperationType_CREATE {
 		exist, err := repository.CheckSkuInventoryExist(req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
+			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %v", err, req.Sku.ShopId, req.Sku.SkuCode)
 			retCode = code.ErrorServer
 			return
 		}
@@ -63,7 +64,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty err: %v, skuProperty: %+v", err, skuProperty)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty err: %v, skuProperty: %v", err, json.MarshalToStringNoError(skuProperty))
 			retCode = code.ErrorServer
 			return
 		}
@@ -87,7 +88,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuPropertyRecord: %+v", err, skuPropertyRecord)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuPropertyRecord: %v", err, json.MarshalToStringNoError(skuPropertyRecord))
 			retCode = code.ErrorServer
 			return
 		}
@@ -109,7 +110,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPriceHistory err: %v, skuPriceHistory: %+v", err, skuPriceHistory)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPriceHistory err: %v, skuPriceHistory: %v", err, json.MarshalToStringNoError(skuPriceHistory))
 			retCode = code.ErrorServer
 			return
 		}
@@ -130,7 +131,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuProperty Rollback err: %v", errRollback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventory err: %v, skuInventory: %+v", err, skuInventory)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventory err: %v, skuInventory: %v", err, json.MarshalToStringNoError(skuInventory))
 			retCode = code.ErrorServer
 			return
 		}
@@ -144,14 +145,14 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 		go func() {
 			err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
 			if err != nil {
-				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuProperty)
+				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %v", err, json.MarshalToStringNoError(skuProperty))
 			}
 		}()
 		return
 	} else if req.OperationType == sku_business.OperationType_PUT_AWAY {
 		record, err := repository.GetSkuInventory("id,amount,last_tx_id", req.Sku.ShopId, req.Sku.SkuCode)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.Sku.ShopId, req.Sku.SkuCode)
+			kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist err: %v, ShopId: %v, SkuCode: %v", err, req.Sku.ShopId, req.Sku.SkuCode)
 			retCode = code.ErrorServer
 			return
 		}
@@ -187,7 +188,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errCallback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx Rollback err: %v", errCallback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx  err: %v, record: %+v", err, skuInventoryRecord)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx  err: %v, record: %v", err, json.MarshalToStringNoError(skuInventoryRecord))
 			retCode = code.ErrorServer
 			return
 		}
@@ -208,7 +209,7 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			if errCallback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "UpdateInventory Rollback err: %v", errCallback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "UpdateInventory  err: %v, where: %+v, maps: %+v", err, updateSkuInventoryWhere, updateSkuInventoryMaps)
+			kelvins.ErrLogger.Errorf(ctx, "UpdateInventory  err: %v, where: %v, maps: %v", err, json.MarshalToStringNoError(updateSkuInventoryWhere), json.MarshalToStringNoError(updateSkuInventoryMaps))
 			retCode = code.ErrorServer
 			return
 		}
@@ -236,7 +237,7 @@ func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (resul
 	result = make([]*sku_business.SkuInventoryInfo, 0)
 	skuInventoryList, err := repository.GetSkuInventoryListByShopId(sqlSelectSkuInventory, shopId, pageSize, pageNum)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryListByShopId err: %v, ShopId: %+v", err, shopId)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryListByShopId err: %v, ShopId: %v", err, shopId)
 		retCode = code.ErrorServer
 		return
 	}
@@ -248,7 +249,7 @@ func getSkuList(ctx context.Context, shopId int64, pageSize, pageNum int) (resul
 	}
 	skuPropertyList, err := repository.GetSkuPropertyList(skuCodeList)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, skuCodeList: %+v", err, skuCodeList)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, skuCodeList: %v", err, json.MarshalToStringNoError(skuCodeList))
 		retCode = code.ErrorServer
 		return
 	}
@@ -296,11 +297,11 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	}
 	rsp, err := client.SkuInventorySearch(ctx, &r)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch %v,err: %v, req: %+v", serverName, err, r)
+		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch %v,err: %v, req: %v", serverName, err, json.MarshalToStringNoError(r))
 		return result, code.ErrorServer
 	}
 	if rsp.Common.Code != search_business.RetCode_SUCCESS {
-		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch %v,err: %v, rsp: %+v", serverName, err, rsp)
+		kelvins.ErrLogger.Errorf(ctx, "SkuInventorySearch req: %v, rsp: %v", json.MarshalToStringNoError(r), json.MarshalToStringNoError(rsp))
 		return result, code.ErrorServer
 	}
 	if len(rsp.List) == 0 {
@@ -324,7 +325,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	}
 	skuInventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, shopIds, skuCodes)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList  err: %v, shopIds: %+v,skuCodes: %+v", err, shopIds, skuCodes)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList  err: %v, shopIds: %+v,skuCodes: %v", err, shopIds, json.MarshalToStringNoError(skuCodes))
 		return result, code.ErrorServer
 	}
 	if len(skuInventoryList) == 0 {
@@ -339,7 +340,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	}
 	skuPropertyList, err := repository.GetSkuPropertyList(skuCodes)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList  err: %v, skuCodes: %+v", err, skuCodes)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList  err: %v, skuCodes: %v", err, json.MarshalToStringNoError(skuCodes))
 		return result, code.ErrorServer
 	}
 	skuCodeToSkuProperty := make(map[string]mysql.SkuProperty)
@@ -390,7 +391,7 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 	}
 	skuInventoryList, err := repository.GetSkuInventoryList("*", shopIdList, req.GetSkuCodeList())
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v,ShopId: %v, SkuCode: %+v", err, req.GetShopId(), req.GetSkuCodeList())
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v,ShopId: %v, SkuCode: %v", err, req.GetShopId(), req.GetSkuCodeList())
 		retCode = code.ErrorServer
 		return
 	}
@@ -405,7 +406,7 @@ func GetSkuList(ctx context.Context, req *sku_business.GetSkuListRequest) (resul
 	}
 	skuCodePropertyList, err := repository.GetSkuPropertyList(skuCodeList)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, SkuCode: %+v", err, skuCodeList)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuPropertyList err: %v, SkuCode: %v", err, json.MarshalToStringNoError(skuCodeList))
 		retCode = code.ErrorServer
 		return
 	}
@@ -447,7 +448,7 @@ func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuP
 	// 检查商品是否存在
 	exist, err := repository.CheckSkuInventoryExist(req.ShopId, req.SkuCode)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist %v,err: %v,ShopId: %v, SkuCode: %+v", err, req.ShopId, req.SkuCode)
+		kelvins.ErrLogger.Errorf(ctx, "CheckSkuInventoryExist err: %v,ShopId: %v, SkuCode: %+v", err, req.ShopId, req.SkuCode)
 		return code.ErrorServer
 	}
 	if !exist {
@@ -469,7 +470,7 @@ func SupplementSkuProperty(ctx context.Context, req *sku_business.SupplementSkuP
 		}
 		err := repository.CreateSkuPropertyEx(ctx, &skuExInfo)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %+v", err, skuExInfo)
+			kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %v", err, json.MarshalToStringNoError(skuExInfo))
 			if strings.HasPrefix(err.Error(), "multiple write errors") {
 				return code.SkuCodeExist
 			}
@@ -507,7 +508,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	}
 	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, checkRecordWhere)
+		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, json.MarshalToStringNoError(checkRecordWhere))
 		retCode = code.ErrorServer
 		return
 	}
@@ -519,7 +520,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 	// 从DB里面取出这些商品
 	inventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, allShopIdList, allSkuCodeList)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, allShopIdList, allSkuCodeList)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, json.MarshalToStringNoError(allShopIdList), json.MarshalToStringNoError(allSkuCodeList))
 		retCode = code.ErrorServer
 		return
 	}
@@ -611,7 +612,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "DeductInventory Rollback err: %v", errRollback)
 					}
-					kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuInventoryRecord: %v", err, skuInventoryRecord)
+					kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuInventoryRecord: %v", err, json.MarshalToStringNoError(skuInventoryRecord))
 					retCode = code.ErrorServer
 					return
 				}
@@ -633,7 +634,7 @@ func DeductInventory(ctx context.Context, req *sku_business.DeductInventoryReque
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "DeductInventory Rollback err: %v", errRollback)
 					}
-					kelvins.ErrLogger.Errorf(ctx, "DeductInventory err: %v, where: %v, maps: %v", err, where, maps)
+					kelvins.ErrLogger.Errorf(ctx, "DeductInventory err: %v, where: %v, maps: %v", err, json.MarshalToStringNoError(where), json.MarshalToStringNoError(maps))
 					retCode = code.ErrorServer
 					return
 				}
@@ -706,7 +707,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	}
 	checkRecordList, err := repository.FindSkuInventoryRecord("id", checkRecordWhere)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, checkRecordWhere)
+		kelvins.ErrLogger.Errorf(ctx, "FindSkuInventoryRecord err: %v, checkRecordWhere: %v", err, json.MarshalToStringNoError(checkRecordWhere))
 		retCode = code.ErrorServer
 		return
 	}
@@ -718,7 +719,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 	// 从DB里面取出这些商品
 	inventoryList, err := repository.GetSkuInventoryList(sqlSelectSkuInventory, allShopIdList, allSkuCodeList)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, allShopIdList, allSkuCodeList)
+		kelvins.ErrLogger.Errorf(ctx, "GetSkuInventoryList err: %v, allShopIdList: %v, skuCodeList: %v", err, json.MarshalToStringNoError(allShopIdList), json.MarshalToStringNoError(allSkuCodeList))
 		retCode = code.ErrorServer
 		return
 	}
@@ -771,7 +772,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "RestoreInventory Rollback err: %v", errRollback)
 					}
-					kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuInventoryRecord: %v", err, skuInventoryRecord)
+					kelvins.ErrLogger.Errorf(ctx, "CreateSkuInventoryRecordByTx err: %v, skuInventoryRecord: %v", err, json.MarshalToStringNoError(skuInventoryRecord))
 					retCode = code.ErrorServer
 					return
 				}
@@ -792,7 +793,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx Rollback err: %v", errRollback)
 					}
-					kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx err: %v, where: %v, maps: %v", err, updateRecordWhere, updateRecordMaps)
+					kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx err: %v, where: %v, maps: %v", err, json.MarshalToStringNoError(updateRecordWhere), json.MarshalToStringNoError(updateRecordMaps))
 					retCode = code.ErrorServer
 					return
 				}
@@ -822,7 +823,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					if errRollback != nil {
 						kelvins.ErrLogger.Errorf(ctx, "RestoreInventory Rollback err: %v", errRollback)
 					}
-					kelvins.ErrLogger.Errorf(ctx, "RestoreInventory err: %v, where: %v, maps: %v", err, where, maps)
+					kelvins.ErrLogger.Errorf(ctx, "RestoreInventory err: %v, where: %v, maps: %v", err, json.MarshalToStringNoError(where), json.MarshalToStringNoError(maps))
 					retCode = code.ErrorServer
 					return
 				}
@@ -876,7 +877,7 @@ func FiltrateSkuPriceVersion(ctx context.Context, req *sku_business.FiltrateSkuP
 			limit := int(req.LimitUpper)
 			skuPriceHistoryList, err := repository.GetSkuPriceHistory("price,version", where, orderByDesc, limit)
 			if err != nil {
-				kelvins.ErrLogger.Errorf(ctx, "GetSkuPriceHistory err: %v, where: %+v,shopIdList: %v,skuCodeList:%v", err, where, nil, nil)
+				kelvins.ErrLogger.Errorf(ctx, "GetSkuPriceHistory err: %v, where: %v", err, where)
 				return result, code.ErrorServer
 			}
 			if len(skuPriceHistoryList) == 0 {
@@ -931,7 +932,7 @@ func ConfirmSkuInventory(ctx context.Context, req *sku_business.ConfirmSkuInvent
 	}
 	_, err := repository.UpdateSkuInventoryRecord(where, maps)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecord err: %v, where :%+, maps: %+v", err, where, maps)
+		kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecord err: %v, where :%v, maps: %v", err, json.MarshalToStringNoError(where), json.MarshalToStringNoError(maps))
 		retCode = code.ErrorServer
 		return
 	}
