@@ -11,4 +11,4 @@ cp -n ./etc/app.ini.example ./etc/app.ini
 mkdir -p logs
 
 echo 开始运行micro-mall-sku
-./micro-mall-sku -s start
+nohup ./micro-mall-sku -s start >nohup.out  2>&1  &
