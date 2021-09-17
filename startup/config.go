@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	SectionEmailConfig             = "email-config"
+	SectionEmailConfig = "email-config"
 	//SectionQueueUserRegisterNotice = "queue-user-register-notice"
 	//SectionQueueUserStateNotice    = "queue-user-state-notice"
-	SectionMongoDB                 = "mongodb-config"
+	SectionMongoDB = "mongodb-config"
 )
 
 // LoadConfig 加载配置对象映射

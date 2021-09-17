@@ -285,7 +285,7 @@ const sqlSelectSkuInventory = "shop_id,sku_code,amount,version,last_tx_id"
 func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventoryRequest) ([]*sku_business.SearchSkuInventoryEntry, int) {
 	result := make([]*sku_business.SearchSkuInventoryEntry, 0)
 	serverName := args.RpcServiceMicroMallSearch
-	conn, err := util.GetGrpcClient(ctx,serverName)
+	conn, err := util.GetGrpcClient(ctx, serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return result, code.ErrorServer
