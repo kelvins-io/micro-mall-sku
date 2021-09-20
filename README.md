@@ -49,6 +49,7 @@ DB = 1
 PoolNum = 10
 
 [email-config]
+Enable = false
 User = "ddd@qq.com"
 Password = "dddd"
 Host = "smtp.qq.com"
