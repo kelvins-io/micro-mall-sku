@@ -142,12 +142,29 @@ func PutAwaySku(ctx context.Context, req *sku_business.PutAwaySkuRequest) (retCo
 			return
 		}
 		// 增加扩展属性
-		go func() {
+		kelvins.GPool.SendJob(func() {
 			err = repository.CreateSkuPropertyMongoDB(ctx, &skuProperty)
 			if err != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateSkuPropertyEx err: %v, skuExInfo: %v", err, json.MarshalToStringNoError(skuProperty))
 			}
-		}()
+		})
+		body := &args.SkuInventoryInfo{
+			ShopId:        req.GetSku().GetShopId(),
+			SkuCode:       req.GetSku().GetSkuCode(),
+			Name:          req.GetSku().GetName(),
+			Price:         req.GetSku().GetPrice(),
+			Title:         req.GetSku().GetTitle(),
+			SubTitle:      req.GetSku().GetSubTitle(),
+			Desc:          req.GetSku().GetDesc(),
+			Production:    req.GetSku().GetProduction(),
+			Supplier:      req.GetSku().GetSupplier(),
+			Category:      req.GetSku().GetCategory(),
+			Color:         req.GetSku().GetColor(),
+			ColorCode:     req.GetSku().GetColorCode(),
+			Specification: req.GetSku().GetSpecification(),
+			DescLink:      req.GetSku().GetDescLink(),
+		}
+		_ = skuInventorySearch(body)
 		return
 	} else if req.OperationType == sku_business.OperationType_PUT_AWAY {
 		record, err := repository.GetSkuInventory("id,amount,last_tx_id", req.Sku.ShopId, req.Sku.SkuCode)
@@ -740,7 +757,6 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 		return
 	}
 	for i := 0; i < len(req.List); i++ {
-		//allShopIdList[i] = req.List[i].ShopId
 		if len(req.List[i].Detail) == 0 {
 			continue
 		}
@@ -797,7 +813,7 @@ func RestoreInventory(ctx context.Context, req *sku_business.RestoreInventoryReq
 					retCode = code.ErrorServer
 					return
 				}
-				//if rows <= 0 {
+				//if rows != 1 {
 				//	errRollback := tx.Rollback()
 				//	if errRollback != nil {
 				//		kelvins.ErrLogger.Errorf(ctx, "UpdateSkuInventoryRecordByTx Rollback err: %v", errRollback)

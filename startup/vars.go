@@ -2,7 +2,11 @@ package startup
 
 import (
 	"context"
+	"gitee.com/cristiane/micro-mall-sku/model/args"
 	"gitee.com/cristiane/micro-mall-sku/vars"
+	"gitee.com/kelvins-io/kelvins"
+	"gitee.com/kelvins-io/kelvins/setup"
+	"gitee.com/kelvins-io/kelvins/util/queue_helper"
 	"github.com/qiniu/qmgo"
 	"log"
 )
@@ -10,12 +14,47 @@ import (
 // SetupVars 加载变量
 func SetupVars() error {
 	var err error
+	// 1
+	err = setupMongodb()
+	if err != nil {
+		return err
+	}
+	// 2
+	err = setupQueueSkuInventorySearchNotice()
+	if err != nil {
+		return err
+	}
 
+	return err
+}
+
+func setupQueueSkuInventorySearchNotice() error {
+	var err error
+	if vars.SkuInventorySearchNoticeSetting != nil {
+		vars.SkuInventorySearchNoticeServer, err = setup.NewAMQPQueue(vars.SkuInventorySearchNoticeSetting, nil)
+		if err != nil {
+			return err
+		}
+		vars.SkuInventorySearchNoticePusher, err = queue_helper.NewPublishService(
+			vars.SkuInventorySearchNoticeServer, &queue_helper.PushMsgTag{
+				DeliveryTag:    args.SkuInventorySearchNoticeTag,
+				DeliveryErrTag: args.SkuInventorySearchNoticeTagErr,
+				RetryCount:     vars.SkuInventorySearchNoticeSetting.TaskRetryCount,
+				RetryTimeout:   vars.SkuInventorySearchNoticeSetting.TaskRetryTimeout,
+			}, kelvins.BusinessLogger)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+func setupMongodb() error {
 	// 初始化mongodb
 	ctx := context.Background()
 	var maxPoolSize = uint64(vars.MongoDBSetting.MaxPoolSize)
 	var minPoolSize = uint64(vars.MongoDBSetting.MinPoolSize)
-
 	mgoCfg := &qmgo.Config{
 		Uri:         vars.MongoDBSetting.Uri,
 		Database:    vars.MongoDBSetting.Database,
@@ -39,8 +78,6 @@ func SetupVars() error {
 		log.Printf("mongodb ping timeout err: %v", err)
 		return err
 	}
-	db := client.Database(vars.MongoDBSetting.Database)
-
-	vars.MongoDBDatabase = db
-	return err
+	vars.MongoDBDatabase = client.Database(vars.MongoDBSetting.Database)
+	return nil
 }

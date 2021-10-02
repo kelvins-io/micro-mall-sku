@@ -1,6 +1,7 @@
 package args
 
 type SkuInventoryInfo struct {
+	ShopId        int64  `json:"shop_id"`
 	SkuCode       string `json:"sku_code"`
 	Name          string `json:"name"`
 	Price         string `json:"price"`
@@ -14,10 +15,6 @@ type SkuInventoryInfo struct {
 	ColorCode     int32  `json:"color_code"`
 	Specification string `json:"specification"`
 	DescLink      string `json:"desc_link"`
-	State         int32  `json:"state"`
-	Amount        int64  `json:"amount"`
-	ShopId        int64  `json:"shop_id"`
-	Version       int    `json:"version"`
 }
 
 type SkuPropertyEx struct {
@@ -44,6 +41,35 @@ type OperationInventoryRsp struct {
 
 const (
 	RpcServiceMicroMallUsers  = "micro-mall-users"
-	RpcServiceMicroMallShop   = "micro-mall-shop"
 	RpcServiceMicroMallSearch = "micro-mall-search"
 )
+
+const (
+	SkuInventorySearchNoticeTag    = "sku_inventory_search_notice"
+	SkuInventorySearchNoticeTagErr = "sku_inventory_search_notice_err"
+)
+
+const (
+	Unknown                  = 0
+	SkuInventorySearchNotice = 1000
+)
+
+var MsgFlags = map[int]string{
+	Unknown:                  "未知",
+	SkuInventorySearchNotice: "商品库存搜索通知",
+}
+
+func GetMsg(code int) string {
+	msg, ok := MsgFlags[code]
+	if ok {
+		return msg
+	}
+	return MsgFlags[Unknown]
+}
+
+type CommonBusinessMsg struct {
+	Type    int    `json:"type"`
+	Tag     string `json:"tag"`
+	UUID    string `json:"uuid"`
+	Content string `json:"content"`
+}
