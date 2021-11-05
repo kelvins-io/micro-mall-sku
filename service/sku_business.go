@@ -10,7 +10,6 @@ import (
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-sku/proto/micro_mall_sku_proto/sku_business"
 	"gitee.com/cristiane/micro-mall-sku/repository"
-	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
@@ -292,7 +291,7 @@ func SearchSkuInventory(ctx context.Context, req *sku_business.SearchSkuInventor
 	result = make([]*sku_business.SearchSkuInventoryEntry, 0)
 	retCode = code.Success
 	searchKey := "micro-mall-sku:search-sku:" + req.GetKeyword()
-	err := vars.G2CacheEngine.Get(searchKey, 120, &result, func() (interface{}, error) {
+	err := kelvins.G2CacheEngine.Get(searchKey, 120, &result, func() (interface{}, error) {
 		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 		defer cancel()
 		list, ret := searchSkuInventory(ctx, req)

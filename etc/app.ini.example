@@ -40,7 +40,7 @@ Password = "xxx"
 DB = 1
 PoolNum = 10
 
-[micro-mall-g2cache]
+[kelvins-g2cache]
 CacheDebug = false
 CacheMonitor = false
 OutCachePubSub = false
