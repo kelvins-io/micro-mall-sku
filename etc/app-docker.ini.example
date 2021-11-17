@@ -40,6 +40,18 @@ Password = "oyuioyiuoyui"
 DB = 1
 PoolNum = 10
 
+[sku-inventory-search-notice]
+Broker = "amqp://micro-mall:szJ9aePR@127.0.0.1:5672/micro-mall"
+DefaultQueue = "sku_inventory_search_notice"
+ResultBackend = "redis://xxx@127.0.0.1:6379/8"
+ResultsExpireIn = 3600
+Exchange = "sku_inventory_search_notice"
+ExchangeType = "direct"
+BindingKey = "sku_inventory_search_notice"
+PrefetchCount = 3
+TaskRetryCount = 3
+TaskRetryTimeout = 3600
+
 [kelvins-g2cache]
 CacheDebug = false
 CacheMonitor = false
