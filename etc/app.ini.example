@@ -75,7 +75,7 @@ Host = "smtp.qq.com"
 Port = "465"
 
 [mongodb-config]
-Uri = "mongodb://localhost:27017"
+Uri = ""
 Username = "admin"
 Password = "ddddd"
 Database = "micro_mall_sku"

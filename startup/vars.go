@@ -2,13 +2,14 @@ package startup
 
 import (
 	"context"
+	"log"
+
 	"gitee.com/cristiane/micro-mall-sku/model/args"
 	"gitee.com/cristiane/micro-mall-sku/vars"
 	"gitee.com/kelvins-io/kelvins"
 	"gitee.com/kelvins-io/kelvins/setup"
 	"gitee.com/kelvins-io/kelvins/util/queue_helper"
 	"github.com/qiniu/qmgo"
-	"log"
 )
 
 // SetupVars 加载变量
@@ -51,6 +52,9 @@ func setupQueueSkuInventorySearchNotice() error {
 }
 
 func setupMongodb() error {
+	if vars.MongoDBSetting == nil || vars.MongoDBSetting.Uri == "" {
+		return nil
+	}
 	// 初始化mongodb
 	ctx := context.Background()
 	var maxPoolSize = uint64(vars.MongoDBSetting.MaxPoolSize)

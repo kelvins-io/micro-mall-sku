@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
+	"sync"
+
 	"gitee.com/cristiane/micro-mall-sku/model/args"
 	"gitee.com/cristiane/micro-mall-sku/model/mongodb"
 	"gitee.com/cristiane/micro-mall-sku/vars"
-	"sync"
 )
 
 var oneSkuPropertyEx sync.Once
@@ -19,6 +20,9 @@ func createIndexesOfSkuPropertyEx() {
 }
 
 func CreateSkuPropertyEx(ctx context.Context, req interface{}) (err error) {
+	if vars.MongoDBDatabase == nil {
+		return nil
+	}
 	// 创建索引
 	createIndexesOfSkuPropertyEx()
 	// 插入记录
