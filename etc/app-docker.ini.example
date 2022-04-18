@@ -26,7 +26,7 @@ NumServerWorkers = 50
 Host = "mysql5_7:3306"
 UserName = "root"
 Password = "micro-mall"
-DBName = "micro_mall_sku"
+DBName = "micro_mall"
 Charset = "utf8mb4"
 PoolNum =  10
 MaxIdleConns = 5
@@ -41,9 +41,9 @@ DB = 1
 PoolNum = 10
 
 [sku-inventory-search-notice]
-Broker = "amqp://micro-mall:szJ9aePR@127.0.0.1:5672/micro-mall"
+Broker = "amqp://root:micro-mall@rabbitmq:5672/micro-mall"
 DefaultQueue = "sku_inventory_search_notice"
-ResultBackend = "redis://xxx@127.0.0.1:6379/8"
+ResultBackend = "redis://oyuioyiuoyui@redis:6379/8"
 ResultsExpireIn = 3600
 Exchange = "sku_inventory_search_notice"
 ExchangeType = "direct"
@@ -57,14 +57,14 @@ CacheDebug = false
 CacheMonitor = false
 OutCachePubSub = false
 FreeCacheSize = 52428800
-RedisConfDSN = "127.0.0.1:6379"
+RedisConfDSN = "redis:6379"
 RedisConfDB = 3
-RedisConfPwd = "xxxx"
+RedisConfPwd = "oyuioyiuoyui"
 RedisConfMaxConn = 30
 PubSubRedisChannel = "micro-mall-sku-pubsub-channel"
-PubSubRedisConfDSN = "127.0.0.1:6379"
+PubSubRedisConfDSN = "redis:6379"
 PubSubRedisConfDB = 5
-PubSubRedisConfPwd = "xxx"
+PubSubRedisConfPwd = "oyuioyiuoyui"
 PubSubRedisConfMaxConn = 3
 
 [email-config]
