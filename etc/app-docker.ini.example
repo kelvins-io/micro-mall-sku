@@ -40,6 +40,10 @@ Password = "oyuioyiuoyui"
 DB = 1
 PoolNum = 10
 
+[kelvins-gpool]
+WorkerNum = 10
+JobChanLen = 1000
+
 [sku-inventory-search-notice]
 Broker = "amqp://root:micro-mall@rabbitmq:5672/micro-mall"
 DefaultQueue = "sku_inventory_search_notice"
